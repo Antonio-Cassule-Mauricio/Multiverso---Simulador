@@ -9,7 +9,7 @@ import { universes } from '../../data/universes';
 import panoramaImg from '../../assets/images/planetary_destinations_1792514020395.jpg';
 import { playSound } from '../../utils/audio';
 
-export default function DestinationsSection({ onSelectDestination, soundEnabled }) {
+export default function DestinationsSection({ onSelectDestination, soundEnabled, t = (k) => k }) {
   // Lista dos mundos disponíveis para simulação
   const destinationList = Object.values(universes);
 
@@ -21,17 +21,13 @@ export default function DestinationsSection({ onSelectDestination, soundEnabled 
         <div className="text-center max-w-3xl mx-auto space-y-4 mb-12">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-950/70 border border-cyan-500/30 text-cyan-300 text-xs font-mono uppercase tracking-wider">
             <Compass className="w-3.5 h-3.5" />
-            <span>Destinos no Sistema Solar</span>
+            <span>{t('dest_badge')}</span>
           </div>
           <h2 className="text-3xl sm:text-4xl font-bold text-white tracking-tight">
-            Cada Mundo, Uma{' '}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-sky-300 to-indigo-300">
-              Nova Realidade Física
-            </span>
+            {t('dest_title')}
           </h2>
           <p className="text-slate-300 text-base sm:text-lg leading-relaxed">
-            A física orbital e os desafios ambientais mudam drasticamente de um corpo celeste para outro.
-            Da poeira fina e sol fraco de Marte até aos oceanos gelados e radiação joviana de Europa.
+            {t('dest_desc')}
           </p>
         </div>
 
@@ -48,7 +44,7 @@ export default function DestinationsSection({ onSelectDestination, soundEnabled 
                 Mapeamento do Multiverso
               </span>
               <h3 className="text-xl sm:text-2xl font-bold text-white mt-1">
-                4 Destinos Planetários Prontos para Simulação Científica
+                {t('dest_banner_title')}
               </h3>
             </div>
           </div>
@@ -70,7 +66,7 @@ export default function DestinationsSection({ onSelectDestination, soundEnabled 
                       style={{ backgroundColor: dest.color, boxShadow: `0 0 12px ${dest.color}` }}
                     />
                     <span className="text-xs font-mono font-bold text-emerald-400 bg-emerald-950/60 border border-emerald-500/30 px-2 py-0.5 rounded">
-                      ${dest.budgetM}M Orçamento
+                      ${dest.budgetM}M {t('dest_budget')}
                     </span>
                   </div>
 
@@ -90,19 +86,19 @@ export default function DestinationsSection({ onSelectDestination, soundEnabled 
                   {/* Tabela de Grandezas Físicas */}
                   <div className="space-y-1.5 pt-2 border-t border-slate-800 text-[11px] font-mono">
                     <div className="flex justify-between text-slate-400">
-                      <span>Distância Solar:</span>
+                      <span>{t('dest_sun_dist')}</span>
                       <span className="text-slate-200">{dest.sunDistanceAU} UA</span>
                     </div>
                     <div className="flex justify-between text-slate-400">
-                      <span>Distância à Terra:</span>
+                      <span>{t('dest_earth_dist')}</span>
                       <span className="text-slate-200">{dest.earthDistanceAU} UA</span>
                     </div>
                     <div className="flex justify-between text-slate-400">
-                      <span>Gravidade:</span>
+                      <span>{t('dest_gravity')}</span>
                       <span className="text-slate-200">{dest.surfaceGravity}</span>
                     </div>
                     <div className="flex justify-between text-slate-400">
-                      <span>Atmosfera:</span>
+                      <span>{t('dest_atmosphere')}</span>
                       <span className="text-slate-200 truncate max-w-[120px]">{dest.atmosphere}</span>
                     </div>
                   </div>
@@ -117,7 +113,7 @@ export default function DestinationsSection({ onSelectDestination, soundEnabled 
                   className="mt-6 w-full py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-cyan-500 hover:text-slate-950 text-slate-200 font-semibold text-xs transition-all flex items-center justify-center gap-2 cursor-pointer border border-slate-700 hover:border-cyan-400 group-hover:shadow-[0_0_15px_rgba(56,189,248,0.25)]"
                 >
                   <Rocket className="w-3.5 h-3.5 text-cyan-400 group-hover:text-slate-950" />
-                  <span>Projetar Para Este Destino</span>
+                  <span>{t('dest_launch_btn')}</span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </button>
 

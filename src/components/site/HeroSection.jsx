@@ -8,7 +8,7 @@ import { Rocket, Shield, Activity, Radio, ArrowRight, Compass, Play } from 'luci
 import heroImg from '../../assets/images/space_multiverso_hero_1792514006340.jpg';
 import { playSound } from '../../utils/audio';
 
-export default function HeroSection({ onOpenSimulator, soundEnabled }) {
+export default function HeroSection({ onOpenSimulator, soundEnabled, t = (k) => k }) {
   // Parâmetros científicos de destaque em formato de badge
   const telemetryBadges = [
     { label: "Equação de Tsiolkovsky", val: "Δv = Isp · g0 · ln(m0/m1)", icon: Rocket },
@@ -30,27 +30,25 @@ export default function HeroSection({ onOpenSimulator, soundEnabled }) {
             {/* Badges de Identificação da Competição e Equipa */}
             <div className="flex flex-wrap items-center gap-2 sm:gap-3">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-950/80 border border-cyan-400/30 text-cyan-300 text-xs font-mono">
-                <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping" />
-                <span>NASA Space Apps Challenge 2026</span>
+                <span className="w-2 h-2 rounded-full bg-cyan-400" />
+                <span>{t('hero_badge')}</span>
               </div>
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-900/90 border border-amber-500/30 text-amber-300 text-xs font-medium">
-                <span>🇦🇴 Estudantes de Engenharia de Software • Angola</span>
+                <span>{t('hero_team_badge')}</span>
               </div>
             </div>
 
             {/* Título Principal de Impacto */}
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-[1.12]">
-              Projeta a tua missão espacial.{' '}
+              {t('hero_title_1')}{' '}
               <span className="bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 via-sky-300 to-blue-500">
-                Domina o Multiverso.
+                {t('hero_title_2')}
               </span>
             </h1>
 
             {/* Descrição resumida da proposta do projeto */}
             <p className="text-base sm:text-lg text-slate-300 leading-relaxed max-w-2xl">
-              Projetar uma missão interplanetária exige equilibrar demandas concorrentes:
-              massa de combustível, captação solar em órbitas distantes, enlaces de telecomunicação com a Terra e orçamentos rigorosos. 
-              Um simulador interativo completo para estudantes e entusiastas transformarem física aeroespacial em ciência real.
+              {t('hero_desc')}
             </p>
 
             {/* Botões de Ação para o Usuário */}
@@ -63,7 +61,7 @@ export default function HeroSection({ onOpenSimulator, soundEnabled }) {
                 className="px-6 py-3.5 rounded-xl text-base font-semibold text-white bg-gradient-to-r from-cyan-500 via-sky-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 shadow-[0_0_30px_rgba(56,189,248,0.4)] transition-all flex items-center gap-3 cursor-pointer border border-cyan-300/40 group hover:scale-[1.02]"
               >
                 <Play className="w-5 h-5 fill-white" />
-                <span>Jogar Agora / Simulador</span>
+                <span>{t('hero_cta_play')}</span>
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </button>
 
@@ -73,7 +71,7 @@ export default function HeroSection({ onOpenSimulator, soundEnabled }) {
                 className="px-5 py-3.5 rounded-xl text-sm font-medium text-slate-300 hover:text-white bg-slate-900/80 hover:bg-slate-800 border border-slate-700/70 transition-all flex items-center gap-2 cursor-pointer"
               >
                 <Compass className="w-4 h-4 text-cyan-400" />
-                <span>Explorar Desafio NASA</span>
+                <span>{t('hero_cta_explore')}</span>
               </a>
             </div>
 
@@ -111,14 +109,14 @@ export default function HeroSection({ onOpenSimulator, soundEnabled }) {
               <div className="absolute bottom-4 left-4 right-4 p-3.5 rounded-xl bg-slate-950/85 border border-cyan-500/30 backdrop-blur-md flex items-center justify-between">
                 <div>
                   <div className="text-[11px] font-mono uppercase text-cyan-400 font-semibold tracking-wider">
-                    Sonda Orbital • Multiverso I
+                    {t('hero_probe_status')}
                   </div>
                   <div className="text-xs text-slate-300">
-                    Telemetria DSN ativa • 1.52 UA de distância solar
+                    {t('hero_probe_sub')}
                   </div>
                 </div>
                 <span className="px-2 py-1 rounded bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-[10px] font-mono font-bold">
-                  SISTEMAS NOMINAIS
+                  {t('hero_probe_nominal')}
                 </span>
               </div>
             </div>
@@ -130,7 +128,7 @@ export default function HeroSection({ onOpenSimulator, soundEnabled }) {
               </div>
               <div className="text-left">
                 <div className="text-[10px] font-mono text-slate-400">Eficiência de Propulsão</div>
-                <div className="text-xs font-mono font-bold text-cyan-300">ISP 320s • Bipropelente</div>
+                <div className="text-xs font-mono font-bold text-cyan-300">{t('hero_isp')}</div>
               </div>
             </div>
 
@@ -140,7 +138,7 @@ export default function HeroSection({ onOpenSimulator, soundEnabled }) {
               </div>
               <div className="text-left">
                 <div className="text-[10px] font-mono text-slate-400">Enlace de Rádio DSN</div>
-                <div className="text-xs font-mono font-bold text-purple-300">35 W • Antena 2.5m</div>
+                <div className="text-xs font-mono font-bold text-purple-300">{t('hero_comms_badge')}</div>
               </div>
             </div>
 

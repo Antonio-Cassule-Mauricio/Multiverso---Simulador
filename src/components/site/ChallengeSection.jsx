@@ -7,7 +7,7 @@ import React, { useState } from 'react';
 import { Target, Zap, Weight, Radio, DollarSign, AlertTriangle } from 'lucide-react';
 import { playSound } from '../../utils/audio';
 
-export default function ChallengeSection({ onOpenSimulator, soundEnabled }) {
+export default function ChallengeSection({ onOpenSimulator, soundEnabled, t = (k) => k }) {
   // Aba ativa selecionada pelo utilizador para inspecionar cada pilar
   const [activeTab, setActiveTab] = useState('mass');
 
@@ -69,15 +69,13 @@ export default function ChallengeSection({ onOpenSimulator, soundEnabled }) {
         <div className="text-center max-w-3xl mx-auto space-y-4 mb-14">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-950/70 border border-blue-500/30 text-blue-300 text-xs font-mono uppercase tracking-wider">
             <Target className="w-3.5 h-3.5" />
-            <span>O Desafio Oficial NASA Space Apps 2026</span>
+            <span>{t('challenge_badge')}</span>
           </div>
           <h2 className="text-3xl sm:text-4xl font-bold text-white tracking-tight">
-            A Arte da Engenharia Espacial:{' '}
-            <span className="text-cyan-400">Demandas Concorrentes</span>
+            {t('challenge_title')}
           </h2>
           <p className="text-slate-300 text-base sm:text-lg leading-relaxed">
-            Para a maioria dos estudantes, projetar uma sonda espacial parece apenas escolher peças bonitas.
-            Na realidade, cada decisão de engenharia afeta diretamente a física, a sobrevivência e a viabilidade financeira da missão.
+            {t('challenge_desc')}
           </p>
         </div>
 
@@ -139,7 +137,7 @@ export default function ChallengeSection({ onOpenSimulator, soundEnabled }) {
                 <div className="p-4 rounded-xl bg-amber-950/30 border border-amber-500/30 flex items-start gap-3">
                   <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
                   <div className="text-xs sm:text-sm text-amber-200/90 leading-relaxed">
-                    <strong className="text-amber-300">Impacto Crítico no Simulador: </strong>
+                    <strong className="text-amber-300">{t('impact_critical')} </strong>
                     {currentPillar.warning}
                   </div>
                 </div>
@@ -151,8 +149,8 @@ export default function ChallengeSection({ onOpenSimulator, soundEnabled }) {
                   <currentPillar.icon className="w-8 h-8" />
                 </div>
                 <div>
-                  <div className="text-xs font-mono uppercase text-slate-400">Pronto para testar na prática?</div>
-                  <div className="text-base font-bold text-white mt-1">Simula esta variável agora</div>
+                  <div className="text-xs font-mono uppercase text-slate-400">{t('challenge_tested_in_game')}</div>
+                  <div className="text-base font-bold text-white mt-1">3D Space Physics</div>
                 </div>
                 <button
                   onClick={() => {
@@ -161,7 +159,7 @@ export default function ChallengeSection({ onOpenSimulator, soundEnabled }) {
                   }}
                   className="w-full py-2.5 px-4 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-sm transition-all cursor-pointer shadow-lg"
                 >
-                  Abrir Simulador Interativo
+                  {t('challenge_test_btn')}
                 </button>
               </div>
 

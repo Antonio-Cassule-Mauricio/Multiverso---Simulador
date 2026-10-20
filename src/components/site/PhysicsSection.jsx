@@ -6,7 +6,7 @@
 import React from 'react';
 import { Cpu, Orbit, Sun, Radio, BatteryCharging } from 'lucide-react';
 
-export default function PhysicsSection() {
+export default function PhysicsSection({ t = (k) => k }) {
   // Lista com as 4 formulações físicas modeladas no simulador
   const formulas = [
     {
@@ -55,15 +55,13 @@ export default function PhysicsSection() {
         <div className="text-center max-w-3xl mx-auto space-y-4 mb-14">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-950/70 border border-cyan-500/30 text-cyan-300 text-xs font-mono uppercase tracking-wider">
             <Cpu className="w-3.5 h-3.5" />
-            <span>Física Real Implementada</span>
+            <span>{t('physics_badge')}</span>
           </div>
           <h2 className="text-3xl sm:text-4xl font-bold text-white tracking-tight">
-            Fórmulas Científicas por Trás do{' '}
-            <span className="text-cyan-400">Simulador</span>
+            {t('physics_title')}
           </h2>
           <p className="text-slate-300 text-base sm:text-lg leading-relaxed">
-            O Multiverso não é um jogo de números aleatórios. Cada resultado reflete as leis da física orbital, 
-            eletrodinâmica solar e telecomunicações planetárias utilizadas por engenheiros da NASA e da ESA.
+            {t('physics_desc')}
           </p>
         </div>
 

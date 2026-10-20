@@ -1,6 +1,6 @@
 // ============================================================================
-// COMPONENTE: SimulatorGame (Controlador Principal do Jogo & Simulador)
-// Responsabilidade: Gestão de estado da missão espacial, presets históricos e integração
+// COMPONENTE: SimulatorGame (Controlador Principal do Jogo & Simulador 3D)
+// Responsabilidade: Gestão de estado da missão espacial, presets históricos e integração 3D
 // ============================================================================
 
 import React, { useState, useMemo } from 'react';
@@ -11,12 +11,19 @@ import { presetMissions } from '../../data/missionsPreset';
 import { playSound } from '../../utils/audio';
 
 // Importação dos módulos específicos do jogo
+import SpaceCanvas3D from './SpaceCanvas3D';
 import MissionBuilder from './MissionBuilder';
 import TelemetryHUD from './TelemetryHUD';
 import LaunchSimulatorModal from './LaunchSimulatorModal';
 import MissionCertificateModal from './MissionCertificateModal';
 
-export default function SimulatorGame({ initialUniverse = 'mars', soundEnabled, onCloseToPortal }) {
+export default function SimulatorGame({
+  initialUniverse = 'mars',
+  soundEnabled,
+  onCloseToPortal,
+  lang = 'pt',
+  t = (k) => k,
+}) {
   // Estado das escolhas de engenharia da missão
   const [universeId, setUniverseId] = useState(initialUniverse);
   const [typeId, setTypeId] = useState('orbiter');
@@ -27,6 +34,10 @@ export default function SimulatorGame({ initialUniverse = 'mars', soundEnabled, 
   const [antennaId, setAntennaId] = useState('medium');
   const [txPower, setTxPower] = useState(35);
   const [launcherId, setLauncherId] = useState('medium');
+
+  // Modo do jogo 3D ('orbit' | 'hangar' | 'surface')
+  const [gameMode, setGameMode] = useState('orbit');
+  const [bonusScience3D, setBonusScience3D] = useState(0);
 
   // Estado da janela de lançamento e certificado
   const [isLaunching, setIsLaunching] = useState(false);
@@ -54,12 +65,22 @@ export default function SimulatorGame({ initialUniverse = 'mars', soundEnabled, 
   // Execução da simulação física aeroespacial
   const result = useMemo(() => {
     try {
-      return evaluateMission(missionConfig);
+      const baseResult = evaluateMission(missionConfig);
+      if (baseResult && bonusScience3D > 0) {
+        return {
+          ...baseResult,
+          science: {
+            ...baseResult.science,
+            returned: baseResult.science.returned + bonusScience3D,
+          },
+        };
+      }
+      return baseResult;
     } catch (e) {
       console.error("Erro na avaliação da simulação:", e);
       return null;
     }
-  }, [missionConfig]);
+  }, [missionConfig, bonusScience3D]);
 
   // Carregar um preset de missão histórica real
   const handleLoadPreset = (preset) => {
@@ -73,6 +94,11 @@ export default function SimulatorGame({ initialUniverse = 'mars', soundEnabled, 
     setAntennaId(preset.comms.antenna);
     setTxPower(preset.comms.txPower);
     setLauncherId(preset.launcher);
+  };
+
+  // Recompensa de pontos de ciência obtidos nas manobras 3D
+  const handleScienceBonus = (pts) => {
+    setBonusScience3D((prev) => prev + pts);
   };
 
   // Iniciar a sequência simulada de voo e contagem
@@ -123,8 +149,8 @@ export default function SimulatorGame({ initialUniverse = 'mars', soundEnabled, 
       if (isSuccess) {
         playSound('success', soundEnabled);
         confetti({
-          particleCount: 90,
-          spread: 80,
+          particleCount: 110,
+          spread: 85,
           origin: { y: 0.6 }
         });
       } else {
@@ -140,10 +166,10 @@ export default function SimulatorGame({ initialUniverse = 'mars', soundEnabled, 
   };
 
   return (
-    <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto text-left relative">
+    <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto text-left relative space-y-6">
       
       {/* Barra Superior com Botão de Voltar ao Portal e Presets */}
-      <div className="flex flex-wrap items-center justify-between gap-4 mb-8 pb-4 border-b border-cyan-500/20">
+      <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-cyan-500/20">
         <div className="flex items-center gap-3">
           <button
             onClick={() => {
@@ -153,13 +179,13 @@ export default function SimulatorGame({ initialUniverse = 'mars', soundEnabled, 
             className="p-2 rounded-xl bg-slate-900 border border-slate-700 hover:border-cyan-400 text-slate-300 hover:text-white transition-all flex items-center gap-1.5 text-xs font-mono cursor-pointer"
           >
             <ArrowLeft className="w-4 h-4 text-cyan-400" />
-            <span>Voltar ao Portal</span>
+            <span>{t('nav_return_portal') || 'Voltar ao Portal'}</span>
           </button>
           <div>
             <h1 className="text-xl sm:text-2xl font-bold text-white tracking-wide font-mono flex items-center gap-2">
               <span className="text-cyan-400">MULTIVERSO</span>
               <span className="text-xs px-2 py-0.5 rounded bg-cyan-950 border border-cyan-500/40 text-cyan-300 font-mono">
-                SIMULADOR DE VOO
+                {t('nav_active_game') || 'JOGO ESPACIAL 3D'}
               </span>
             </h1>
             <p className="text-xs text-slate-400">
@@ -172,7 +198,7 @@ export default function SimulatorGame({ initialUniverse = 'mars', soundEnabled, 
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-xs font-mono text-slate-400 mr-1 flex items-center gap-1">
             <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-            <span>Presets Históricos:</span>
+            <span>{t('game_presets_title') || 'Presets Históricos:'}</span>
           </span>
           {presetMissions.map((p) => (
             <button
@@ -187,8 +213,26 @@ export default function SimulatorGame({ initialUniverse = 'mars', soundEnabled, 
         </div>
       </div>
 
-      {/* Grelha Principal: Lado Esquerdo (Construtor da Sonda) vs Lado Direito (HUD de Telemetria) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      {/* ====================================================================== */}
+      {/* 1. MOTOR 3D PRINCIPAL DO JOGO (Three.js WebGL Canvas) */}
+      {/* ====================================================================== */}
+      <div className="w-full">
+        <SpaceCanvas3D
+          missionConfig={missionConfig}
+          result={result}
+          gameMode={gameMode}
+          setGameMode={setGameMode}
+          soundEnabled={soundEnabled}
+          onScienceBonus={handleScienceBonus}
+          lang={lang}
+          t={t}
+        />
+      </div>
+
+      {/* ====================================================================== */}
+      {/* 2. GRELHA DE ENGENHARIA: CONSTRUTOR DE MISSÃO + HUD DE TELEMETRIA */}
+      {/* ====================================================================== */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start pt-4">
         
         {/* Painel do Construtor de Missão (Esquerda) */}
         <div className="lg:col-span-7 space-y-6">

@@ -6,7 +6,7 @@
 import React from 'react';
 import { Rocket } from 'lucide-react';
 
-export default function Footer({ onOpenSimulator }) {
+export default function Footer({ onOpenSimulator, t = (k) => k }) {
   return (
     <footer className="border-t border-cyan-900/40 bg-slate-950 text-slate-400 py-12 text-left">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
@@ -27,8 +27,7 @@ export default function Footer({ onOpenSimulator }) {
               </span>
             </div>
             <p className="text-xs text-slate-400 leading-relaxed max-w-md">
-              Simulador Interativo de Engenharia e Missões Espaciais concebido para o NASA Space Apps Challenge 2026.
-              Desenvolvido com rigor científico e dedicação por colegas e estudantes angolanos de <strong>Engenharia de Software</strong>.
+              {t('footer_desc')}
             </p>
             <div className="flex items-center gap-2 text-xs text-amber-400 font-mono">
               <span>🇦🇴 Angola • Luanda</span>
@@ -38,7 +37,7 @@ export default function Footer({ onOpenSimulator }) {
           {/* Coluna 2: Lista dos Colegas da Equipa */}
           <div className="space-y-2">
             <h4 className="text-xs font-mono uppercase text-white font-bold tracking-wider">
-              Equipa de Engenharia
+              {t('footer_team_title')}
             </h4>
             <ul className="text-xs space-y-1.5 text-slate-400 font-mono">
               <li className="text-slate-300 font-semibold">• António Maurício (Líder)</li>
@@ -52,7 +51,7 @@ export default function Footer({ onOpenSimulator }) {
           {/* Coluna 3: Fórmulas e Atalhos Rápidos */}
           <div className="space-y-2">
             <h4 className="text-xs font-mono uppercase text-white font-bold tracking-wider">
-              Física & Ferramentas
+              {t('footer_physics_title')}
             </h4>
             <ul className="text-xs space-y-1.5 text-slate-400">
               <li>• Equação de Tsiolkovsky (Δv)</li>
@@ -64,7 +63,7 @@ export default function Footer({ onOpenSimulator }) {
                   onClick={onOpenSimulator}
                   className="text-cyan-400 hover:underline cursor-pointer font-semibold pt-1 block"
                 >
-                  → Abrir Simulador de Voo
+                  {t('footer_open_game')}
                 </button>
               </li>
             </ul>
@@ -75,7 +74,7 @@ export default function Footer({ onOpenSimulator }) {
         {/* Linha Inferior com Copyright e Menção aos Estudantes */}
         <div className="pt-8 border-t border-slate-900 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 font-mono gap-4">
           <div>
-            © 2026 Multiverso • Desenvolvido para o NASA Space Apps Challenge
+            {t('footer_copy')}
           </div>
           <div className="flex items-center gap-4">
             <span>Colegas Estudantes de Engenharia de Software</span>

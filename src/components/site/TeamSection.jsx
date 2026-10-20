@@ -7,7 +7,7 @@ import React from 'react';
 import { Award, ShieldCheck } from 'lucide-react';
 import missionRoomImg from '../../assets/images/mission_operations_room_1792514036256.jpg';
 
-export default function TeamSection() {
+export default function TeamSection({ t = (k) => k }) {
   // Dados dos 5 colegas participantes no NASA Space Apps Challenge 2026
   const members = [
     {
@@ -54,18 +54,13 @@ export default function TeamSection() {
         {/* Cabeçalho da Secção da Equipa */}
         <div className="text-center max-w-3xl mx-auto space-y-4 mb-14">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-950/60 border border-amber-500/40 text-amber-300 text-xs font-mono uppercase tracking-wider">
-            <span>🇦🇴 Representação Nacional • Luanda, Angola</span>
+            <span>{t('team_badge')}</span>
           </div>
           <h2 className="text-3xl sm:text-4xl font-bold text-white tracking-tight">
-            Equipa Multiverso •{' '}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-orange-300 to-cyan-400">
-              Colegas de Engenharia de Software
-            </span>
+            {t('team_title')}
           </h2>
           <p className="text-slate-300 text-base sm:text-lg leading-relaxed">
-            Somos um grupo de 5 colegas e estudantes angolanos de <strong className="text-white">Engenharia de Software</strong>, 
-            unidos pela paixão pela exploração espacial, ciência computacional e foco para alcançar a vitória no 
-            <strong className="text-cyan-400"> NASA Space Apps Challenge 2026</strong>.
+            {t('team_desc')}
           </p>
         </div>
 
@@ -80,17 +75,17 @@ export default function TeamSection() {
             <div className="text-left max-w-2xl">
               <div className="flex items-center gap-2 mb-1">
                 <span className="px-2.5 py-0.5 rounded bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 font-mono text-xs font-semibold">
-                  ESTUDANTES DE ENGENHARIA DE SOFTWARE
+                  {t('team_banner_badge')}
                 </span>
                 <span className="px-2.5 py-0.5 rounded bg-amber-500/20 border border-amber-400/40 text-amber-300 font-mono text-xs">
                   ANGOLA 🇦🇴
                 </span>
               </div>
               <h3 className="text-xl sm:text-2xl font-bold text-white">
-                Centro de Operações & Inovação Aeroespacial
+                {t('team_banner_title')}
               </h3>
               <p className="text-xs sm:text-sm text-slate-300 mt-1">
-                Combinando rigor algorítmico, física espacial precisa e design intuitivo para democratizar o ensino e o planeamento de missões interplanetárias.
+                {t('team_banner_sub')}
               </p>
             </div>
           </div>
@@ -139,19 +134,19 @@ export default function TeamSection() {
             <div className="space-y-3">
               <div className="flex items-center gap-2 text-amber-400">
                 <Award className="w-5 h-5" />
-                <span className="text-xs font-mono uppercase font-bold tracking-wider">Foco na Vitória</span>
+                <span className="text-xs font-mono uppercase font-bold tracking-wider">{t('team_commitment_title')}</span>
               </div>
               <h3 className="text-lg font-bold text-white">
-                Rumo ao Prémio Global NASA
+                {t('team_commitment_heading')}
               </h3>
               <p className="text-xs text-slate-300 leading-relaxed">
-                Este projeto é o resultado de trabalho em equipa contínuo, estudo profundo das publicações do JPL/NASA e dedicação dos 5 colegas para demonstrar o elevado nível da engenharia de software em Angola.
+                {t('team_commitment_desc')}
               </p>
             </div>
             
             <div className="mt-4 pt-3 border-t border-amber-500/20 flex items-center gap-2 text-xs font-mono text-amber-300">
               <ShieldCheck className="w-4 h-4 text-emerald-400" />
-              <span>Código Aberto & Simulação Fidedigna</span>
+              <span>Código Aberto & Simulação 3D</span>
             </div>
           </div>
 
