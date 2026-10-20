@@ -1,0 +1,8 @@
+{
+  "name": "Multiverso",
+  "description": "Space mission simulator and universe explorer for NASA Space Apps.",
+  "requestFeedback": false,
+  "capabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
