@@ -9,12 +9,12 @@ import heroImg from '../../assets/images/space_multiverso_hero_1792514006340.jpg
 import { playSound } from '../../utils/audio';
 
 export default function HeroSection({ onOpenSimulator, soundEnabled, t = (k) => k }) {
-  // Parâmetros científicos de destaque em formato de badge
+  // Parâmetros científicos de destaque em formato de badge com tradução dinâmica
   const telemetryBadges = [
-    { label: "Equação de Tsiolkovsky", val: "Δv = Isp · g0 · ln(m0/m1)", icon: Rocket },
-    { label: "Radiação Solar", val: "S = 1361 / d² AU (W/m²)", icon: Activity },
-    { label: "Link de Telemetria", val: "Downlink DSN Terra", icon: Radio },
-    { label: "Engenharia de Sistemas", val: "Massa · Potência · Custo", icon: Shield },
+    { label: t('hero_badge_tsiolkovsky'), val: "Δv = Isp · g0 · ln(m0/m1)", icon: Rocket },
+    { label: t('hero_badge_solar'), val: "S = 1361 / d² AU (W/m²)", icon: Activity },
+    { label: t('hero_badge_telemetry'), val: "Downlink DSN Terra", icon: Radio },
+    { label: t('hero_badge_systems'), val: "Massa · Potência · Custo", icon: Shield },
   ];
 
   return (
@@ -127,7 +127,7 @@ export default function HeroSection({ onOpenSimulator, soundEnabled, t = (k) => 
                 <Rocket className="w-4 h-4" />
               </div>
               <div className="text-left">
-                <div className="text-[10px] font-mono text-slate-400">Eficiência de Propulsão</div>
+                <div className="text-[10px] font-mono text-slate-400">{t('hero_propulsion_eff')}</div>
                 <div className="text-xs font-mono font-bold text-cyan-300">{t('hero_isp')}</div>
               </div>
             </div>
@@ -137,7 +137,7 @@ export default function HeroSection({ onOpenSimulator, soundEnabled, t = (k) => 
                 <Radio className="w-4 h-4" />
               </div>
               <div className="text-left">
-                <div className="text-[10px] font-mono text-slate-400">Enlace de Rádio DSN</div>
+                <div className="text-[10px] font-mono text-slate-400">{t('hero_dsn_link')}</div>
                 <div className="text-xs font-mono font-bold text-purple-300">{t('hero_comms_badge')}</div>
               </div>
             </div>

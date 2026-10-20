@@ -4,7 +4,8 @@
 // ============================================================================
 
 import React from 'react';
-import { Rocket, X, Award } from 'lucide-react';
+import { Rocket, X, Award, Satellite } from 'lucide-react';
+import { opsStrings } from '../../data/opsContent';
 
 export default function LaunchSimulatorModal({
   isOpen,
@@ -13,8 +14,12 @@ export default function LaunchSimulatorModal({
   launchLog,
   result,
   onOpenCertificate,
+  onStartOperations,
+  lang = 'pt',
+  t = (k) => k,
 }) {
   if (!isOpen || !result) return null;
+  const s = opsStrings[lang] || opsStrings.pt;
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4">
@@ -28,10 +33,10 @@ export default function LaunchSimulatorModal({
             </div>
             <div>
               <h3 className="text-lg font-bold text-white font-mono">
-                CENTRO DE OPERAÇÕES • SEQUÊNCIA DE VOO
+                {t('modal_launch_title')}
               </h3>
               <p className="text-xs text-slate-400">
-                Alvo: {result.universeName} • Veículo: {result.typeName}
+                {t('modal_target')} {result.universeName} • {t('modal_vehicle')} {result.typeName}
               </p>
             </div>
           </div>
@@ -50,16 +55,16 @@ export default function LaunchSimulatorModal({
         {/* Pipeline Visual das 4 Etapas de Lançamento */}
         <div className="grid grid-cols-4 gap-2 text-center text-[10px] font-mono">
           <div className={`p-2 rounded-lg border ${launchStage >= 1 ? 'bg-cyan-950 border-cyan-400 text-cyan-300 font-bold' : 'bg-slate-950 border-slate-800 text-slate-500'}`}>
-            1. T-0 Lançamento
+            {t('modal_step_1')}
           </div>
           <div className={`p-2 rounded-lg border ${launchStage >= 2 ? 'bg-cyan-950 border-cyan-400 text-cyan-300 font-bold' : 'bg-slate-950 border-slate-800 text-slate-500'}`}>
-            2. Injeção & Cruzeiro
+            {t('modal_step_2')}
           </div>
           <div className={`p-2 rounded-lg border ${launchStage >= 3 ? 'bg-cyan-950 border-cyan-400 text-cyan-300 font-bold' : 'bg-slate-950 border-slate-800 text-slate-500'}`}>
-            3. Inserção / EDL
+            {t('modal_step_3')}
           </div>
           <div className={`p-2 rounded-lg border ${launchStage >= 4 ? 'bg-cyan-950 border-cyan-400 text-cyan-300 font-bold' : 'bg-slate-950 border-slate-800 text-slate-500'}`}>
-            4. Downlink Científico
+            {t('modal_step_4')}
           </div>
         </div>
 
@@ -75,18 +80,27 @@ export default function LaunchSimulatorModal({
         {/* Ações Finais ao Concluir o Voo */}
         {launchStage === 5 && (
           <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
+            {onStartOperations && (
+              <button
+                onClick={onStartOperations}
+                className="px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs sm:text-sm transition-all flex items-center gap-2 cursor-pointer shadow-lg"
+              >
+                <Satellite className="w-4 h-4" />
+                <span>{s.ops_start}</span>
+              </button>
+            )}
             <button
               onClick={onOpenCertificate}
               className="px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs sm:text-sm transition-all flex items-center gap-2 cursor-pointer shadow-lg"
             >
               <Award className="w-4 h-4" />
-              <span>Emitir Certificado da Missão</span>
+              <span>{t('game_certificate_btn')}</span>
             </button>
             <button
               onClick={onClose}
               className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs transition-all cursor-pointer"
             >
-              Retornar aos Comandos
+              {t('modal_return_btn')}
             </button>
           </div>
         )}

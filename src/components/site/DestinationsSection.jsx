@@ -1,6 +1,6 @@
 // ============================================================================
 // COMPONENTE: DestinationsSection (Destinos Cósmicos de Exploração)
-// Responsabilidade: Apresentar os corpos celestes disponíveis e parâmetros físicos
+// Responsabilidade: Apresentar os corpos celestes disponíveis com tradução 100% dinâmica
 // ============================================================================
 
 import React from 'react';
@@ -41,7 +41,7 @@ export default function DestinationsSection({ onSelectDestination, soundEnabled,
           <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent flex items-end p-6 sm:p-8">
             <div className="text-left">
               <span className="px-2.5 py-1 rounded bg-cyan-500/20 border border-cyan-400/40 text-cyan-300 font-mono text-xs">
-                Mapeamento do Multiverso
+                {t('dest_mapping_tag')}
               </span>
               <h3 className="text-xl sm:text-2xl font-bold text-white mt-1">
                 {t('dest_banner_title')}
@@ -50,9 +50,14 @@ export default function DestinationsSection({ onSelectDestination, soundEnabled,
           </div>
         </div>
 
-        {/* Grelha de Cards dos Planetas / Luas */}
+        {/* Grelha de Cards dos Planetas / Luas Traduzidos Dinamicamente */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {destinationList.map((dest) => {
+            const translatedName = t(`dest_${dest.id}_name`) || dest.name;
+            const translatedTagline = t(`dest_${dest.id}_tagline`) || dest.tagline;
+            const translatedDesc = t(`dest_${dest.id}_desc`) || dest.description;
+            const translatedAtmo = t(`dest_${dest.id}_atmo`) || dest.atmosphere;
+
             return (
               <div
                 key={dest.id}
@@ -72,15 +77,15 @@ export default function DestinationsSection({ onSelectDestination, soundEnabled,
 
                   <div>
                     <h3 className="text-lg font-bold text-white group-hover:text-cyan-300 transition-colors">
-                      {dest.name}
+                      {translatedName}
                     </h3>
                     <p className="text-xs text-cyan-400 font-mono mt-0.5">
-                      {dest.tagline}
+                      {translatedTagline}
                     </p>
                   </div>
 
                   <p className="text-xs text-slate-400 leading-relaxed line-clamp-3">
-                    {dest.description}
+                    {translatedDesc}
                   </p>
 
                   {/* Tabela de Grandezas Físicas */}
@@ -99,7 +104,7 @@ export default function DestinationsSection({ onSelectDestination, soundEnabled,
                     </div>
                     <div className="flex justify-between text-slate-400">
                       <span>{t('dest_atmosphere')}</span>
-                      <span className="text-slate-200 truncate max-w-[120px]">{dest.atmosphere}</span>
+                      <span className="text-slate-200 truncate max-w-[120px]">{translatedAtmo}</span>
                     </div>
                   </div>
                 </div>

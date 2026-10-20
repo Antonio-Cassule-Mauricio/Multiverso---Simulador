@@ -1,6 +1,6 @@
 // ============================================================================
 // COMPONENTE: TeamSection (Apresentação dos Estudantes e Colegas de Engenharia)
-// Responsabilidade: Destaque da equipa de 5 colegas estudantes de engenharia de software de Angola
+// Responsabilidade: Destaque da equipa de 5 colegas estudantes de engenharia de software de Angola com tradução 100% dinâmica
 // ============================================================================
 
 import React from 'react';
@@ -8,41 +8,41 @@ import { Award, ShieldCheck } from 'lucide-react';
 import missionRoomImg from '../../assets/images/mission_operations_room_1792514036256.jpg';
 
 export default function TeamSection({ t = (k) => k }) {
-  // Dados dos 5 colegas participantes no NASA Space Apps Challenge 2026
+  // Dados dos 5 colegas participantes no NASA Space Apps Challenge 2026 com traduções
   const members = [
     {
       name: "António Maurício",
-      role: "Líder da Equipa & Arquitetura de Sistemas",
-      focus: "Engenharia de Software • Coordenação Técnica • Simulação Multivariável",
-      tag: "Líder de Equipa",
+      role: t('member_1_role'),
+      focus: t('member_1_focus'),
+      tag: "Team Lead",
       badgeColor: "border-cyan-400/40 text-cyan-300 bg-cyan-950/60",
     },
     {
       name: "Adilson Francisco",
-      role: "Dinâmica Orbital & Lógica Numérica",
-      focus: "Equação de Tsiolkovsky • Modelagem de Δv • Capacidade de Lançadores",
-      tag: "Dinâmica Orbital",
+      role: t('member_2_role'),
+      focus: t('member_2_focus'),
+      tag: "Dynamics",
       badgeColor: "border-blue-400/40 text-blue-300 bg-blue-950/60",
     },
     {
       name: "Agostinho Mariti",
-      role: "Instrumentação & Carga Científica",
-      focus: "Espectrometria • Radares de Subsolo • Taxonomia de Missões Planetárias",
-      tag: "Carga Útil",
+      role: t('member_3_role'),
+      focus: t('member_3_focus'),
+      tag: "Payload",
       badgeColor: "border-purple-400/40 text-purple-300 bg-purple-950/60",
     },
     {
       name: "Edmilson Segredo",
-      role: "Sistemas de Potência & Telecomunicações",
-      focus: "Equação de Enlace DSN • Fluxo Solar 1/r² • Balanço Térmico e Baterias",
-      tag: "Potência & Rádio",
+      role: t('member_4_role'),
+      focus: t('member_4_focus'),
+      tag: "Power & Comms",
       badgeColor: "border-amber-400/40 text-amber-300 bg-amber-950/60",
     },
     {
       name: "Hilton Diamantino",
-      role: "Engenharia Frontend & Interface Gráfica",
-      focus: "Experiência de Utilizador • Telemetria em Tempo Real • Design Aeroespacial",
-      tag: "Interface de Voo",
+      role: t('member_5_role'),
+      focus: t('member_5_focus'),
+      tag: "UI / 3D Graphics",
       badgeColor: "border-emerald-400/40 text-emerald-300 bg-emerald-950/60",
     },
   ];
@@ -91,7 +91,7 @@ export default function TeamSection({ t = (k) => k }) {
           </div>
         </div>
 
-        {/* Grelha com os 5 Colegas da Equipa */}
+        {/* Grelha com os 5 Colegas da Equipa Dinamicamente Traduzidos */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {members.map((m, idx) => {
             return (
@@ -122,7 +122,7 @@ export default function TeamSection({ t = (k) => k }) {
                 </div>
 
                 <div className="mt-4 pt-3 border-t border-slate-800 flex items-center justify-between text-[11px] text-slate-400 font-mono">
-                  <span>Engenharia de Software</span>
+                  <span>{t('team_software_eng')}</span>
                   <span className="text-cyan-400 font-bold">Space Apps 2026</span>
                 </div>
               </div>
@@ -146,7 +146,7 @@ export default function TeamSection({ t = (k) => k }) {
             
             <div className="mt-4 pt-3 border-t border-amber-500/20 flex items-center gap-2 text-xs font-mono text-amber-300">
               <ShieldCheck className="w-4 h-4 text-emerald-400" />
-              <span>Código Aberto & Simulação 3D</span>
+              <span>{t('team_open_source')}</span>
             </div>
           </div>
 

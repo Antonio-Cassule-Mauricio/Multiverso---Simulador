@@ -257,6 +257,8 @@ export default function SimulatorGame({
             setLauncherId={setLauncherId}
             result={result}
             soundEnabled={soundEnabled}
+            lang={lang}
+            t={t}
           />
         </div>
 
@@ -265,6 +267,8 @@ export default function SimulatorGame({
           <TelemetryHUD
             result={result}
             onStartLaunch={startLaunchSequence}
+            lang={lang}
+            t={t}
           />
         </div>
 
@@ -278,6 +282,8 @@ export default function SimulatorGame({
         launchLog={launchLog}
         result={result}
         onOpenCertificate={() => setShowCertificate(true)}
+        lang={lang}
+        t={t}
       />
 
       {/* Modal do Certificado Oficial de Desempenho de Missão */}
@@ -285,6 +291,8 @@ export default function SimulatorGame({
         isOpen={showCertificate}
         onClose={() => setShowCertificate(false)}
         result={result}
+        lang={lang}
+        t={t}
       />
 
     </div>

@@ -1,47 +1,47 @@
 // ============================================================================
 // COMPONENTE: PhysicsSection (Modelagem Matemática & Fórmulas da NASA)
-// Responsabilidade: Exibir com rigor as equações implementadas no código do simulador
+// Responsabilidade: Exibir com rigor as equações com tradução dinâmica em PT/EN/FR
 // ============================================================================
 
 import React from 'react';
 import { Cpu, Orbit, Sun, Radio, BatteryCharging } from 'lucide-react';
 
 export default function PhysicsSection({ t = (k) => k }) {
-  // Lista com as 4 formulações físicas modeladas no simulador
+  // Lista com as 4 formulações físicas modeladas com chaves de tradução
   const formulas = [
     {
-      title: "Equação de Tsiolkovsky",
-      subtitle: "Propulsão de Foguetão & Delta-V",
+      title: t('formula_rocket_title'),
+      subtitle: t('formula_rocket_sub'),
       formula: "Δv = Isp · g0 · ln(m₀ / m₁)",
       inverse: "m_propelente = m_seco · (e^(Δv / (Isp · g0)) - 1)",
-      explanation: "Calcula a quantidade de propelente necessária para alterar a velocidade orbital da sonda. O gasto de combustível cresce exponencialmente com a velocidade necessária (Δv).",
+      explanation: t('formula_rocket_exp'),
       icon: Orbit,
       badge: "Isp = 320 s (Bipropelente)",
     },
     {
-      title: "Lei do Inverso do Quadrado",
-      subtitle: "Irradiância & Captação Solar",
+      title: t('formula_solar_title'),
+      subtitle: t('formula_solar_sub'),
       formula: "S(d) = 1361 / d²  [W/m²]",
       inverse: "P_elétrica = S(d) · Área · 28% η · 0.8 derate · f_sol",
-      explanation: "A energia da luz solar dissipa-se proporcionalmente ao quadrado da distância da estrela. Em Marte (1.52 UA), o fluxo cai para 43% da Terra; em Europa (5.2 UA), para menos de 4%.",
+      explanation: t('formula_solar_exp'),
       icon: Sun,
       badge: "Constante Solar = 1361 W/m²",
     },
     {
-      title: "Equação de Enlace de RF",
-      subtitle: "Downlink de Dados Deep Space Network (DSN)",
+      title: t('formula_comms_title'),
+      subtitle: t('formula_comms_sub'),
       formula: "Taxa (bps) = (k · P_tx · D_antena²) / d²",
       inverse: "Downlink (Mbit/dia) = (Taxa · Horas_contacto · 3600) / 10⁶",
-      explanation: "O ganho da antena parabólica escala com o quadrado do seu diâmetro físico, enquanto a atenuação cresce com o quadrado da distância cósmica até às antenas na Terra.",
+      explanation: t('formula_comms_exp'),
       icon: Radio,
       badge: "k = 2500 calibrado DSN",
     },
     {
-      title: "Capacidade de Baterias em Eclipse",
-      subtitle: "Armazenamento Eletroquímico de Bordo",
+      title: t('formula_batt_title'),
+      subtitle: t('formula_batt_sub'),
       formula: "Energia_necessária (Wh) = Consumo_W · Horas_noite",
       inverse: "Bateria_útil = Massa_bateria · 150 Wh/kg · 80% DoD",
-      explanation: "Durante as noites na superfície ou eclipses na sombra do planeta, os painéis solares produzem 0W. A sonda depende 100% da sua reserva de bateria de iões de lítio.",
+      explanation: t('formula_batt_exp'),
       icon: BatteryCharging,
       badge: "Densidade = 150 Wh/kg",
     },
@@ -65,7 +65,7 @@ export default function PhysicsSection({ t = (k) => k }) {
           </p>
         </div>
 
-        {/* Grelha com os 4 Cartões de Fórmulas */}
+        {/* Grelha com os 4 Cartões de Fórmulas Dinamicamente Traduzidos */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {formulas.map((item, index) => {
             const Icon = item.icon;

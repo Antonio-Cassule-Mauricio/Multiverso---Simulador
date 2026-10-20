@@ -1,6 +1,6 @@
 // ============================================================================
 // COMPONENTE: ChallengeSection (Explicação do Desafio NASA Space Apps 2026)
-// Responsabilidade: Apresentar as 4 grandes demandas concorrentes de engenharia
+// Responsabilidade: Apresentar as 4 grandes demandas concorrentes de engenharia 100% traduzidas
 // ============================================================================
 
 import React, { useState } from 'react';
@@ -11,55 +11,55 @@ export default function ChallengeSection({ onOpenSimulator, soundEnabled, t = (k
   // Aba ativa selecionada pelo utilizador para inspecionar cada pilar
   const [activeTab, setActiveTab] = useState('mass');
 
-  // Os 4 pilares essenciais da tomada de decisão em engenharia espacial
+  // Os 4 pilares essenciais da tomada de decisão em engenharia espacial com traduções dinâmicas
   const pillars = [
     {
       id: 'mass',
-      title: 'Massa & Propulsão (Tsiolkovsky)',
+      title: t('pillar_mass_title'),
       icon: Weight,
       color: 'text-cyan-400',
       borderColor: 'border-cyan-500/40',
-      badge: 'Δv e Capacidade',
-      summary: 'Cada quilograma adicional de instrumento científico exige massa exponencial de combustível e escudo térmico.',
-      details: 'A equação de Tsiolkovsky rege que o propelente necessário cresce exponencialmente com a velocidade necessária (Δv). Se a massa da sonda exceder a capacidade do lançador selecionado, o foguete simplesmente não consegue escapar da gravidade terrestre ou falhará na injeção translunar.',
-      warning: 'Adicionar muitos instrumentos pesados pode exceder o limite do lançador, exigindo um foguete mais potente e exponencialmente mais caro.',
+      badge: t('pillar_mass_badge'),
+      summary: t('pillar_mass_summary'),
+      details: t('pillar_mass_details'),
+      warning: t('pillar_mass_warning'),
     },
     {
       id: 'power',
-      title: 'Potência & Noites de Eclipse',
+      title: t('pillar_power_title'),
       icon: Zap,
       color: 'text-amber-400',
       borderColor: 'border-amber-500/40',
-      badge: 'Sol vs RTG Nuclear',
-      summary: 'A luz solar diminui com o quadrado da distância. Na órbita de Júpiter, a energia solar cai mais de 96%.',
-      details: 'Sondas próximas do Sol podem usar painéis solares compactos, mas precisam de baterias dimensionadas para sobreviver às noites ou eclipses orbitais quando o sol é bloqueado pelo planeta. Em destinos distantes como Europa ou Titã, painéis solares tornam-se impraticáveis e geradores nucleares RTG tornam-se obrigatórios.',
-      warning: 'Se a geração de energia for menor que o consumo elétrico dos computadores de bordo e sensores, a sonda sofrerá um "blackout" irreversível.',
+      badge: t('pillar_power_badge'),
+      summary: t('pillar_power_summary'),
+      details: t('pillar_power_details'),
+      warning: t('pillar_power_warning'),
     },
     {
       id: 'comms',
-      title: 'Telecomunicações & Enlace DSN',
+      title: t('pillar_comms_title'),
       icon: Radio,
       color: 'text-purple-400',
       borderColor: 'border-purple-500/40',
-      badge: 'Antenas & Downlink',
-      summary: 'Não adianta recolher gigabytes de ciência se o transmissor de rádio não conseguir enviá-los à Terra.',
-      details: 'A intensidade das ondas de rádio decai com o quadrado da distância interplanetária. Para transmitir imagens de alta resolução de Marte (a 1.5 UA) ou Júpiter (a 5.2 UA), é necessária uma antena de alto ganho com refletor parabólico e dezenas de watts de potência de rádio.',
-      warning: 'Antenas fracas limitam a ciência devolvida a uma pequena fração dos dados coletados, desperdiçando o potencial da missão.',
+      badge: t('pillar_comms_badge'),
+      summary: t('pillar_comms_summary'),
+      details: t('pillar_comms_details'),
+      warning: t('pillar_comms_warning'),
     },
     {
       id: 'budget',
-      title: 'Orçamento & Margem de Custo',
+      title: t('pillar_budget_title'),
       icon: DollarSign,
       color: 'text-emerald-400',
       borderColor: 'border-emerald-500/40',
-      badge: 'Cap Financiamento',
-      summary: 'O dinheiro é finito. Todo componente tem um custo de fabricação, teste e integração aeroespacial.',
-      details: 'Desde os milhões investidos no lançador até aos instrumentos científicos e geradores de radioisótopos, a missão precisa respeitar rigorosamente o teto orçamental definido pela agência espacial (NASA/ESA).',
-      warning: 'Projetos que ultrapassam o orçamento não são aprovados para voo no comitê de avaliação espacial.',
+      badge: t('pillar_budget_badge'),
+      summary: t('pillar_budget_summary'),
+      details: t('pillar_budget_details'),
+      warning: t('pillar_budget_warning'),
     },
   ];
 
-  const currentPillar = pillars.find((p) => p.id === activeTab);
+  const currentPillar = pillars.find((p) => p.id === activeTab) || pillars[0];
 
   return (
     <section id="challenge" className="py-20 border-b border-cyan-900/30 bg-slate-950/60 relative">

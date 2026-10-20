@@ -5,13 +5,21 @@
 
 import React from 'react';
 import { X, Printer } from 'lucide-react';
+import { opsStrings } from '../../data/opsContent';
+import { gradeBadgeClass } from './gradeStyle';
 
 export default function MissionCertificateModal({
   isOpen,
   onClose,
   result,
+  gradeInfo = null,
+  opsOutcome = null,
+  lang = 'pt',
+  t = (k) => k,
 }) {
   if (!isOpen || !result) return null;
+  const s = opsStrings[lang] || opsStrings.pt;
+  const finalScience = result.science.returned + (opsOutcome?.scienceBonus ?? 0);
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-4">
@@ -31,15 +39,33 @@ export default function MissionCertificateModal({
             <span>NASA SPACE APPS CHALLENGE 2026 • CERTIFICADO DE ENGENHARIA</span>
           </div>
           <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-wide font-mono">
-            CERTIFICADO DE DESEMPENHO DE MISSÃO
+            {t('cert_title')}
           </h2>
           <p className="text-xs text-slate-400 font-mono">
-            Desenvolvido por Colegas e Estudantes de Engenharia de Software • Angola 🇦🇴
+            {t('cert_sub')} • Angola 🇦🇴
           </p>
         </div>
 
         {/* Caixa de Métricas e Resultados do Voo */}
         <div className="p-5 rounded-2xl bg-slate-950/80 border border-slate-800 text-left space-y-4 font-mono text-xs">
+
+          {/* Classificação Oficial da Missão (E → S) */}
+          {gradeInfo && (
+            <div className="flex items-center justify-between p-3 rounded-xl bg-slate-900 border border-slate-800">
+              <div>
+                <span className="text-slate-500 uppercase text-[10px] tracking-widest">{s.grade_label}</span>
+                <div className="text-white font-bold text-sm mt-0.5">
+                  {s.grade_names[gradeInfo.grade]} • {gradeInfo.score}/100
+                </div>
+              </div>
+              <span
+                className={`w-12 h-12 rounded-xl border-2 font-extrabold text-2xl flex items-center justify-center ${gradeBadgeClass(gradeInfo.grade)}`}
+              >
+                {gradeInfo.grade}
+              </span>
+            </div>
+          )}
+
           <div className="grid grid-cols-2 gap-4">
             <div>
               <span className="text-slate-500">Destino Cósmico:</span>
@@ -51,7 +77,12 @@ export default function MissionCertificateModal({
             </div>
             <div>
               <span className="text-slate-500">Ciência Coletada:</span>
-              <div className="text-cyan-400 font-bold text-sm">{result.science.returned.toFixed(0)} Pontos</div>
+              <div className="text-cyan-400 font-bold text-sm">
+                {finalScience.toFixed(0)} Pontos
+                {opsOutcome && opsOutcome.scienceBonus !== 0 && (
+                  <span className="text-slate-500 font-normal"> ({opsOutcome.scienceBonus > 0 ? '+' : ''}{opsOutcome.scienceBonus} ops)</span>
+                )}
+              </div>
             </div>
             <div>
               <span className="text-slate-500">Probabilidade de Êxito:</span>
@@ -68,6 +99,30 @@ export default function MissionCertificateModal({
               </div>
             </div>
           </div>
+
+          {/* Resumo da Fase de Operações, se a campanha foi jogada */}
+          {opsOutcome && (
+            <div className="grid grid-cols-3 gap-3 pt-1 text-center">
+              <div className="p-2 rounded-lg bg-slate-900 border border-slate-800">
+                <div className="text-[9px] uppercase text-slate-500">{s.ops_health}</div>
+                <div className={`font-bold text-sm ${opsOutcome.health > 60 ? 'text-emerald-400' : opsOutcome.health > 0 ? 'text-amber-400' : 'text-rose-400'}`}>
+                  {opsOutcome.health}%
+                </div>
+              </div>
+              <div className="p-2 rounded-lg bg-slate-900 border border-slate-800">
+                <div className="text-[9px] uppercase text-slate-500">{s.ops_science}</div>
+                <div className={`font-bold text-sm ${opsOutcome.scienceBonus >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                  {opsOutcome.scienceBonus > 0 ? '+' : ''}{opsOutcome.scienceBonus}
+                </div>
+              </div>
+              <div className="p-2 rounded-lg bg-slate-900 border border-slate-800">
+                <div className="text-[9px] uppercase text-slate-500">{s.ops_reserve}</div>
+                <div className={`font-bold text-sm ${opsOutcome.reserveDelta >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                  {opsOutcome.reserveDelta > 0 ? '+' : ''}{opsOutcome.reserveDelta}M$
+                </div>
+              </div>
+            </div>
+          )}
 
           <div className="pt-3 border-t border-slate-800 text-[11px] text-slate-400 leading-relaxed">
             Este certificado valida a conformidade dos cálculos de Tsiolkovsky, irradiância inversa solar e capacidade de link de rádio simulados na plataforma Multiverso.
