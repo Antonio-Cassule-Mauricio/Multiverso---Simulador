@@ -1,6 +1,5 @@
 // ============================================================================
 // COMPONENTE: Navbar (Barra de Navegação do Portal com Tradução 3 Idiomas)
-// Responsabilidade: Navegação principal, seletor de idioma (PT/EN/FR), áudio e jogo
 // ============================================================================
 
 import React, { useState } from 'react';
@@ -19,7 +18,6 @@ export default function Navbar({
 }) {
   const [langMenuOpen, setLangMenuOpen] = useState(false);
 
-  // Lista com as 3 línguas disponíveis e respetivas bandeiras
   const languages = [
     { code: 'pt', label: 'Português', flag: '🇵🇹' },
     { code: 'en', label: 'English', flag: '🇺🇸' },
@@ -28,14 +26,12 @@ export default function Navbar({
 
   const currentLangObj = languages.find((l) => l.code === lang) || languages[0];
 
-  // Alternar estado de som sintetizado (efeitos sonoros espaciais)
   const toggleSound = () => {
     const next = !soundEnabled;
     setSoundEnabled(next);
     if (next) playSound('toggle', true);
   };
 
-  // Navegar de forma suave para as secções da landing page
   const handleNavClick = (sectionId) => {
     playSound('click', soundEnabled);
     if (currentView === 'simulator') {
@@ -78,7 +74,7 @@ export default function Navbar({
           </div>
         </div>
 
-        {/* Links de Navegação da Página */}
+        {/* Links de Navegação */}
         <nav className="hidden md:flex items-center gap-6 text-sm text-slate-300 font-medium">
           <button 
             onClick={() => handleNavClick('challenge')}
@@ -107,15 +103,14 @@ export default function Navbar({
           </button>
         </nav>
 
-        {/* Ações à Direita: Seletor de Idioma, Áudio e Botão Jogar */}
+        {/* Idioma, Áudio e Jogar */}
         <div className="flex items-center gap-3">
-          
-          {/* Seletor Multilíngue (PT / EN / FR) com Bandeiras */}
+          {/* Seletor Multilíngue */}
           <div className="relative">
             <button
               onClick={() => setLangMenuOpen(!langMenuOpen)}
               className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-800 bg-slate-900/70 hover:bg-slate-800 text-xs font-mono text-slate-200 hover:border-cyan-400 transition-all cursor-pointer"
-              title="Mudar idioma / Change language / Changer de langue"
+              title="Mudar idioma"
             >
               <span className="text-base leading-none">{currentLangObj.flag}</span>
               <span className="font-bold uppercase">{currentLangObj.code}</span>
@@ -152,7 +147,7 @@ export default function Navbar({
             {soundEnabled ? <Volume2 className="w-4 h-4 text-cyan-400" /> : <VolumeX className="w-4 h-4 text-slate-500" />}
           </button>
 
-          {/* Botão Principal para Jogar o Simulador */}
+          {/* Botão Principal Jogar */}
           <button
             onClick={() => {
               playSound('click', soundEnabled);
@@ -164,7 +159,6 @@ export default function Navbar({
               <Rocket className="w-4 h-4 text-white group-hover:-translate-y-0.5 group-hover:translate-x-0.5 transition-transform" />
               <span>{currentView === 'simulator' ? t('nav_active_game') : t('nav_play')}</span>
             </span>
-            <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
           </button>
         </div>
 

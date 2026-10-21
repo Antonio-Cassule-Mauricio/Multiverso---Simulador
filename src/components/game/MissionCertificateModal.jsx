@@ -1,154 +1,139 @@
 // ============================================================================
-// COMPONENTE: MissionCertificateModal (Certificado Oficial de Desempenho de Missão)
-// Responsabilidade: Gerar o certificado de validação aeroespacial pronto a imprimir
+// COMPONENTE: MissionCertificateModal (Certificado Oficial de Qualificação de Voo)
+// Responsabilidade: Exibir o diploma oficial da missão com nota da NASA,
+// métricas de engenharia, assinaturas dos colegas e comentários em Português.
 // ============================================================================
 
 import React from 'react';
-import { X, Printer } from 'lucide-react';
+import { Award, CheckCircle2, AlertTriangle, Download, X, Rocket, Sparkles } from 'lucide-react';
 import { opsStrings } from '../../data/opsContent';
-import { gradeBadgeClass } from './gradeStyle';
 
 export default function MissionCertificateModal({
   isOpen,
   onClose,
-  result,
-  gradeInfo = null,
-  opsOutcome = null,
+  evaluation,
+  config,
   lang = 'pt',
   t = (k) => k,
 }) {
-  if (!isOpen || !result) return null;
-  const s = opsStrings[lang] || opsStrings.pt;
-  const finalScience = result.science.returned + (opsOutcome?.scienceBonus ?? 0);
+  if (!isOpen || !evaluation) return null;
+
+  const ops = opsStrings[lang] || opsStrings.pt;
+  const isApproved = evaluation.isApproved;
+
+  // Cálculo da nota da missão (S, A, B, C, D)
+  let grade = 'B';
+  if (evaluation.successProb >= 90 && isApproved) grade = 'S';
+  else if (evaluation.successProb >= 75 && isApproved) grade = 'A';
+  else if (evaluation.successProb >= 50 && isApproved) grade = 'B';
+  else if (isApproved) grade = 'C';
+  else grade = 'D';
+
+  const gradeName = ops.grade_names[grade] || ops.grade_names.B;
+
+  const teamMembers = [
+    "António Maurício (Tech Lead)",
+    "Adilson Francisco (Orbital Dynamics)",
+    "Agostinho Mariti (Payloads)",
+    "Edmilson Segredo (Power & RF)",
+    "Hilton Diamantino (Frontend 3D)",
+  ];
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-4">
-      <div className="max-w-2xl w-full bg-slate-900 border-2 border-amber-400/50 p-6 sm:p-8 rounded-3xl shadow-[0_0_60px_rgba(251,191,36,0.25)] space-y-6 text-center relative text-slate-100">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md">
+      <div className="w-full max-w-2xl rounded-2xl bg-gradient-to-b from-slate-900 to-slate-950 border-2 border-cyan-400/60 p-8 shadow-2xl text-left space-y-6 relative overflow-hidden">
         
+        {/* Marca d'água de fundo */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-5 pointer-events-none">
+          <Rocket className="w-96 h-96 text-cyan-400" />
+        </div>
+
         {/* Botão de Fechar */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white cursor-pointer"
+          className="absolute top-4 right-4 p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 cursor-pointer"
         >
-          <X className="w-4 h-4" />
+          <X className="w-5 h-5" />
         </button>
 
-        {/* Cabeçalho do Certificado */}
-        <div className="space-y-2">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-400/30 text-amber-300 text-xs font-mono uppercase">
-            <span>NASA SPACE APPS CHALLENGE 2026 • CERTIFICADO DE ENGENHARIA</span>
+        {/* Cabeçalho do Diploma */}
+        <div className="text-center space-y-2 border-b border-slate-800 pb-5">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-950/80 border border-cyan-500/40 text-cyan-300 text-xs font-mono font-bold">
+            <Award className="w-3.5 h-3.5 text-cyan-400" />
+            <span>NASA SPACE APPS CHALLENGE 2026</span>
           </div>
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-wide font-mono">
+
+          <h3 className="text-xl sm:text-2xl font-black text-white font-mono tracking-wider">
             {t('cert_title')}
-          </h2>
+          </h3>
+
           <p className="text-xs text-slate-400 font-mono">
-            {t('cert_sub')} • Angola 🇦🇴
+            {t('cert_sub')}
           </p>
         </div>
 
-        {/* Caixa de Métricas e Resultados do Voo */}
-        <div className="p-5 rounded-2xl bg-slate-950/80 border border-slate-800 text-left space-y-4 font-mono text-xs">
-
-          {/* Classificação Oficial da Missão (E → S) */}
-          {gradeInfo && (
-            <div className="flex items-center justify-between p-3 rounded-xl bg-slate-900 border border-slate-800">
-              <div>
-                <span className="text-slate-500 uppercase text-[10px] tracking-widest">{s.grade_label}</span>
-                <div className="text-white font-bold text-sm mt-0.5">
-                  {s.grade_names[gradeInfo.grade]} • {gradeInfo.score}/100
-                </div>
-              </div>
-              <span
-                className={`w-12 h-12 rounded-xl border-2 font-extrabold text-2xl flex items-center justify-center ${gradeBadgeClass(gradeInfo.grade)}`}
-              >
-                {gradeInfo.grade}
-              </span>
+        {/* Classificação Oficial (Grade S / A / B / C) */}
+        <div className="p-4 rounded-xl bg-slate-950/80 border border-slate-800 flex items-center justify-between">
+          <div>
+            <div className="text-[10px] font-mono text-slate-400 uppercase tracking-wider">
+              {ops.grade_label}
             </div>
-          )}
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <span className="text-slate-500">Destino Cósmico:</span>
-              <div className="text-white font-bold text-sm">{result.universeName}</div>
-            </div>
-            <div>
-              <span className="text-slate-500">Tipo de Sonda:</span>
-              <div className="text-white font-bold text-sm">{result.typeName}</div>
-            </div>
-            <div>
-              <span className="text-slate-500">Ciência Coletada:</span>
-              <div className="text-cyan-400 font-bold text-sm">
-                {finalScience.toFixed(0)} Pontos
-                {opsOutcome && opsOutcome.scienceBonus !== 0 && (
-                  <span className="text-slate-500 font-normal"> ({opsOutcome.scienceBonus > 0 ? '+' : ''}{opsOutcome.scienceBonus} ops)</span>
-                )}
-              </div>
-            </div>
-            <div>
-              <span className="text-slate-500">Probabilidade de Êxito:</span>
-              <div className="text-emerald-400 font-bold text-sm">{(result.successProbability * 100).toFixed(0)}%</div>
-            </div>
-            <div>
-              <span className="text-slate-500">Custo Total de Voo:</span>
-              <div className="text-slate-300 font-bold text-sm">${result.cost.total.toFixed(0)}M USD</div>
-            </div>
-            <div>
-              <span className="text-slate-500">Status Geral:</span>
-              <div className={`font-bold text-sm ${result.ok ? 'text-emerald-400' : 'text-amber-400'}`}>
-                {result.ok ? "QUALIFICADO PELA NASA" : "COM RESTRIÇÕES OPERACIONAIS"}
-              </div>
+            <div className="text-sm font-bold text-white font-mono mt-0.5">
+              {gradeName}
             </div>
           </div>
 
-          {/* Resumo da Fase de Operações, se a campanha foi jogada */}
-          {opsOutcome && (
-            <div className="grid grid-cols-3 gap-3 pt-1 text-center">
-              <div className="p-2 rounded-lg bg-slate-900 border border-slate-800">
-                <div className="text-[9px] uppercase text-slate-500">{s.ops_health}</div>
-                <div className={`font-bold text-sm ${opsOutcome.health > 60 ? 'text-emerald-400' : opsOutcome.health > 0 ? 'text-amber-400' : 'text-rose-400'}`}>
-                  {opsOutcome.health}%
-                </div>
-              </div>
-              <div className="p-2 rounded-lg bg-slate-900 border border-slate-800">
-                <div className="text-[9px] uppercase text-slate-500">{s.ops_science}</div>
-                <div className={`font-bold text-sm ${opsOutcome.scienceBonus >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                  {opsOutcome.scienceBonus > 0 ? '+' : ''}{opsOutcome.scienceBonus}
-                </div>
-              </div>
-              <div className="p-2 rounded-lg bg-slate-900 border border-slate-800">
-                <div className="text-[9px] uppercase text-slate-500">{s.ops_reserve}</div>
-                <div className={`font-bold text-sm ${opsOutcome.reserveDelta >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                  {opsOutcome.reserveDelta > 0 ? '+' : ''}{opsOutcome.reserveDelta}M$
-                </div>
-              </div>
-            </div>
-          )}
-
-          <div className="pt-3 border-t border-slate-800 text-[11px] text-slate-400 leading-relaxed">
-            Este certificado valida a conformidade dos cálculos de Tsiolkovsky, irradiância inversa solar e capacidade de link de rádio simulados na plataforma Multiverso.
+          <div className="w-14 h-14 rounded-xl bg-gradient-to-tr from-cyan-500/20 to-blue-600/30 border border-cyan-400/50 flex items-center justify-center font-black text-2xl text-cyan-300 font-mono shadow-md">
+            {grade}
           </div>
         </div>
 
-        {/* Assinaturas da Equipa Técnica de Angola */}
-        <div className="grid grid-cols-2 gap-4 pt-2 text-[10px] font-mono text-slate-400 border-t border-slate-800">
-          <div>
-            <div className="font-bold text-slate-200">António Maurício & Equipa</div>
-            <div>Estudantes de Engenharia de Software • Angola</div>
+        {/* Resumo de Métricas de Voo */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800">
+            <div className="text-[10px] text-slate-400 font-mono">Destino</div>
+            <div className="text-xs font-bold text-white font-mono capitalize mt-0.5">{config?.universe || 'Mars'}</div>
           </div>
-          <div>
-            <div className="font-bold text-slate-200">NASA Space Apps Challenge</div>
-            <div>Global Hackathon Participant 2026</div>
+
+          <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800">
+            <div className="text-[10px] text-slate-400 font-mono">Massa Total</div>
+            <div className="text-xs font-bold text-white font-mono mt-0.5">{Math.round(evaluation.mass?.launchMassKg || 0)} kg</div>
+          </div>
+
+          <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800">
+            <div className="text-[10px] text-slate-400 font-mono">Ciência Retornada</div>
+            <div className="text-xs font-bold text-cyan-400 font-mono mt-0.5">{evaluation.science?.totalScore || 0} pts</div>
+          </div>
+
+          <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800">
+            <div className="text-[10px] text-slate-400 font-mono">Margem Custo</div>
+            <div className="text-xs font-bold text-emerald-400 font-mono mt-0.5">${Math.round(evaluation.cost?.budgetM - evaluation.cost?.totalCostM || 0)}M</div>
           </div>
         </div>
 
-        {/* Botão de Impressão */}
-        <div className="flex justify-center gap-3 pt-2">
+        {/* Assinaturas da Equipa de Estudantes de Engenharia de Software */}
+        <div className="pt-4 border-t border-slate-800">
+          <div className="text-[10px] font-mono text-slate-400 mb-2 uppercase tracking-wider text-center">
+            Comité de Engenharia de Software • Luanda, Angola 🇦🇴
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-[11px] font-mono text-slate-300">
+            {teamMembers.map((member, i) => (
+              <div key={i} className="p-2 rounded bg-slate-950/60 border border-slate-800/80 text-center truncate">
+                {member}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Ações Inferiores */}
+        <div className="flex justify-end pt-2">
           <button
             onClick={() => window.print()}
-            className="px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs font-mono transition-all flex items-center gap-2 cursor-pointer shadow-lg"
+            className="px-5 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold font-mono text-xs flex items-center gap-2 cursor-pointer transition-all shadow-md shadow-cyan-500/25"
           >
-            <Printer className="w-4 h-4" />
-            <span>Imprimir / Guardar Certificado</span>
+            <Download className="w-4 h-4" />
+            <span>Imprimir / Guardar PDF</span>
           </button>
         </div>
 

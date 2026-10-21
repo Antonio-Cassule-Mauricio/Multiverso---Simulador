@@ -6,9 +6,7 @@
 
 export const translations = {
   pt: {
-    // ------------------------------------------------------------------------
-    // BARRA DE NAVEGAÇÃO (NAVBAR)
-    // ------------------------------------------------------------------------
+    // NAVBAR
     nav_title: "MULTIVERSO",
     nav_subtitle: "Simulador de Missões Espaciais • Estudantes de Engenharia de Software",
     nav_challenge: "O Desafio",
@@ -21,9 +19,7 @@ export const translations = {
     sound_enable: "Ativar efeitos sonoros",
     sound_disable: "Desativar efeitos sonoros",
 
-    // ------------------------------------------------------------------------
-    // SECÇÃO HERO (PORTAL PRINCIPAL)
-    // ------------------------------------------------------------------------
+    // HERO
     hero_badge: "NASA Space Apps Challenge 2026",
     hero_team_badge: "🇦🇴 Estudantes de Engenharia de Software • Angola",
     hero_title_1: "Projeta a tua missão espacial.",
@@ -45,9 +41,7 @@ export const translations = {
     hero_propulsion_eff: "Eficiência de Propulsão",
     hero_dsn_link: "Enlace de Rádio DSN",
 
-    // ------------------------------------------------------------------------
-    // DESAFIO OFICIAL NASA & PILARES DE ENGENHARIA
-    // ------------------------------------------------------------------------
+    // CHALLENGE & PILLARS
     challenge_badge: "O Desafio Oficial NASA Space Apps 2026",
     challenge_title: "A Arte da Engenharia Espacial: Demandas Concorrentes",
     challenge_desc: "Para a maioria dos estudantes, projetar uma sonda espacial parece apenas escolher peças bonitas. Na realidade, cada decisão de engenharia afeta diretamente a física, a sobrevivência e a viabilidade financeira da missão.",
@@ -79,9 +73,7 @@ export const translations = {
     pillar_budget_details: "Desde os milhões investidos no lançador até aos instrumentos científicos e geradores de radioisótopos, a missão precisa respeitar rigorosamente o teto orçamental definido pela agência espacial (NASA/ESA).",
     pillar_budget_warning: "Projetos que ultrapassam o orçamento não são aprovados para voo no comitê de avaliação espacial.",
 
-    // ------------------------------------------------------------------------
-    // DESTINOS CÓSMICOS (CARDS DO SITE E SELETOR DO JOGO)
-    // ------------------------------------------------------------------------
+    // DESTINATIONS
     dest_badge: "Destinos no Sistema Solar",
     dest_title: "Cada Mundo, Uma Nova Realidade Física",
     dest_desc: "A física orbital e os desafios ambientais mudam drasticamente de um corpo celeste para outro. Da poeira fina e sol fraco de Marte até aos oceanos gelados de Europa.",
@@ -114,9 +106,7 @@ export const translations = {
     dest_titan_desc: "Distância extrema (9.58 UA). A densa atmosfera de azoto permite aterrissagens com paraquedas sem escudo térmico pesado, mas a luz solar não penetra.",
     dest_titan_atmo: "Densa (98% Nitrogénio)",
 
-    // ------------------------------------------------------------------------
-    // FÓRMULAS FÍSICAS (CARDS DO SITE)
-    // ------------------------------------------------------------------------
+    // PHYSICS
     physics_badge: "Física Real Implementada",
     physics_title: "Fórmulas Científicas por Trás do Jogo",
     physics_desc: "O Multiverso é baseado nas leis da física orbital, eletrodinâmica solar e telecomunicações planetárias utilizadas por engenheiros da NASA e da ESA.",
@@ -133,9 +123,7 @@ export const translations = {
     formula_batt_sub: "Armazenamento Eletroquímico de Bordo",
     formula_batt_exp: "Durante as noites na superfície ou eclipses na sombra do planeta, os painéis solares produzem 0W. A sonda depende 100% da sua reserva de bateria de iões de lítio.",
 
-    // ------------------------------------------------------------------------
-    // EQUIPA DE ESTUDANTES (CARDS DO SITE)
-    // ------------------------------------------------------------------------
+    // TEAM
     team_badge: "🇦🇴 Representação Nacional • Luanda, Angola",
     team_title: "Equipa Multiverso • Colegas de Engenharia de Software",
     team_desc: "Somos um grupo de 5 colegas e estudantes angolanos de Engenharia de Software, unidos pela paixão pela exploração espacial, ciência computacional e foco para alcançar a vitória no NASA Space Apps Challenge 2026.",
@@ -158,9 +146,7 @@ export const translations = {
     member_5_role: "Engenharia Frontend & Interface Gráfica 3D",
     member_5_focus: "Experiência de Utilizador • Telemetria em Tempo Real • Design Aeroespacial 3D",
 
-    // ------------------------------------------------------------------------
-    // CONSTRUTOR DE MISSÕES (CARDS DE ETAPAS E COMPONENTES)
-    // ------------------------------------------------------------------------
+    // BUILDER
     builder_step_1: "DESTINO CELESTE (UNIVERSO)",
     builder_step_1_sub: "Orçamento da Agência:",
     builder_step_2: "ARQUITETURA DA SONDA",
@@ -185,7 +171,6 @@ export const translations = {
     builder_launcher_cap: "Capacidade:",
     builder_launcher_reliability: "Confiabilidade:",
 
-    // Tipos de Veículos
     type_orbiter_name: "Orbitador",
     type_orbiter_desc: "Sonda orbital para mapeamento global, altimetria e relay de telecomunicações.",
     type_lander_name: "Aterrissador (Lander)",
@@ -193,7 +178,6 @@ export const translations = {
     type_rover_name: "Veículo Móvel (Rover)",
     type_rover_desc: "Laboratório robótico com rodas articuladas para exploração de múltiplos sítios geológicos.",
 
-    // Instrumentos Científicos
     inst_camera_name: "Câmara Óptica Multi-espectral",
     inst_camera_desc: "Mapeamento em cores de alta resolução da superfície e topografia.",
     inst_spectrometer_name: "Espectrómetro Infravermelho",
@@ -209,12 +193,10 @@ export const translations = {
     inst_magnetometer_name: "Magnetómetro de Fluxo Atómico",
     inst_magnetometer_desc: "Medição de campos magnéticos planetários e interacções com o vento solar.",
 
-    // Antenas
     antenna_low_name: "Antena Omnidirecional (Baixo Ganho)",
     antenna_medium_name: "Antena Parabólica Média (1.4m)",
     antenna_high_name: "Antena Parabólica de Alto Ganho (2.4m)",
 
-    // Lançadores
     launcher_small_name: "Lançador Ligeiro (Electron / Vega)",
     launcher_small_desc: "Custo reduzido e preparação rápida, ideal para cubesats e sondas leves.",
     launcher_medium_name: "Lançador Médio (Falcon 9 / Ariane 62)",
@@ -222,7 +204,6 @@ export const translations = {
     launcher_heavy_name: "Super-Lançador Pesado (SLS / Falcon Heavy)",
     launcher_heavy_desc: "Capacidade máxima de injeção translunar e interplanetária para grandes missões.",
 
-    // Presets Históricos
     preset_title: "Missões Históricas de Referência:",
     preset_mro_tag: "Clássico da NASA",
     preset_mro_desc: "Sonda orbital de alto volume científico em Marte com antena de 3m e radar de penetração de gelo.",
@@ -231,9 +212,7 @@ export const translations = {
     preset_dragonfly_tag: "Desafio Extremo em Titã",
     preset_dragonfly_desc: "Aterrissador com broca na densa atmosfera de Titã para investigar química pré-biótica em lagos de metano.",
 
-    // ------------------------------------------------------------------------
-    // TELEMETRIA E DIAGNÓSTICO EM TEMPO REAL (HUD)
-    // ------------------------------------------------------------------------
+    // HUD
     hud_title: "Telemetria de Voo (Tempo Real)",
     hud_flight_approved: "APROVADO P/ VOO",
     hud_flight_anomaly: "ANOMALIAS DETETADAS",
@@ -254,9 +233,7 @@ export const translations = {
     hud_launch_btn: "🚀 Iniciar Voo no Jogo 3D",
     hud_certificate_btn: "Emitir Certificado Oficial",
 
-    // ------------------------------------------------------------------------
-    // SIMULADOR DE VOO 3D & JOGO ESTILO ROCKSTAR
-    // ------------------------------------------------------------------------
+    // 3D GAME
     game_mode_earth: "Nível 1: Lançamento da Terra",
     game_mode_cruise: "Nível 2: Espaço Profundo & Frota",
     game_mode_orbit: "Nível 3: Órbita do Destino",
@@ -294,9 +271,7 @@ export const translations = {
     obj_planetary_insertion: "Realizar queima retrógrada para entrar em órbita de mapeamento",
     obj_surface_landing: "Efetuar descida e pouso suave com velocidade < 4.0 m/s",
 
-    // ------------------------------------------------------------------------
-    // JANELAS MODAIS E CERTIFICADOS
-    // ------------------------------------------------------------------------
+    // MODALS & CERTIFICATE
     modal_launch_title: "CENTRO DE OPERAÇÕES • SEQUÊNCIA DE VOO",
     modal_target: "Alvo:",
     modal_vehicle: "Veículo:",
@@ -310,9 +285,7 @@ export const translations = {
     cert_status_approved: "MISSÃO QUALIFICADA COM SUCESSO",
     cert_status_failed: "MISSÃO COM RESTRIÇÕES DE ENGENHARIA",
 
-    // ------------------------------------------------------------------------
-    // RODAPÉ (FOOTER)
-    // ------------------------------------------------------------------------
+    // FOOTER
     footer_desc: "Simulador Interativo e Jogo 3D de Engenharia Espacial concebido para o NASA Space Apps Challenge 2026 por estudantes angolanos de Engenharia de Software.",
     footer_team_title: "Equipa de Engenharia",
     footer_physics_title: "Física & Equações",
@@ -321,9 +294,6 @@ export const translations = {
   },
 
   en: {
-    // ------------------------------------------------------------------------
-    // NAVBAR
-    // ------------------------------------------------------------------------
     nav_title: "MULTIVERSO",
     nav_subtitle: "Space Mission Simulator • Software Engineering Students",
     nav_challenge: "The Challenge",
@@ -336,9 +306,6 @@ export const translations = {
     sound_enable: "Enable Sound Effects",
     sound_disable: "Disable Sound Effects",
 
-    // ------------------------------------------------------------------------
-    // HERO SECTION
-    // ------------------------------------------------------------------------
     hero_badge: "NASA Space Apps Challenge 2026",
     hero_team_badge: "🇦🇴 Software Engineering Students • Angola",
     hero_title_1: "Design your space mission.",
@@ -360,9 +327,6 @@ export const translations = {
     hero_propulsion_eff: "Propulsion Efficiency",
     hero_dsn_link: "Deep Space Network (DSN)",
 
-    // ------------------------------------------------------------------------
-    // NASA CHALLENGE & PILLARS
-    // ------------------------------------------------------------------------
     challenge_badge: "Official NASA Space Apps Challenge 2026",
     challenge_title: "The Art of Space Engineering: Competing Demands",
     challenge_desc: "For most students, designing a space mission seems like picking cool parts. In reality, every engineering decision directly dictates orbital mechanics, survival during eclipses, and financial viability.",
@@ -394,9 +358,6 @@ export const translations = {
     pillar_budget_details: "From launch vehicle millions to science spectrometers and radioisotope generators, missions must stay under NASA/ESA caps.",
     pillar_budget_warning: "Projects exceeding their cost ceiling are rejected by agency flight review committees.",
 
-    // ------------------------------------------------------------------------
-    // DESTINATIONS CARDS
-    // ------------------------------------------------------------------------
     dest_badge: "Solar System Targets",
     dest_title: "Each World, A New Physical Reality",
     dest_desc: "Orbital physics and environmental challenges change drastically between celestial bodies. From the fine dust and faint sun of Mars to the ocean beneath Europa's ice.",
@@ -429,9 +390,6 @@ export const translations = {
     dest_titan_desc: "Extreme distance (9.58 AU). Dense nitrogen atmosphere enables parachute landing without heavy thermal shield, but sunlight cannot penetrate.",
     dest_titan_atmo: "Dense (98% Nitrogen)",
 
-    // ------------------------------------------------------------------------
-    // PHYSICS FORMULAS
-    // ------------------------------------------------------------------------
     physics_badge: "Real Physics Implemented",
     physics_title: "Scientific Formulas Behind the Game",
     physics_desc: "Multiverso is grounded in the laws of orbital mechanics, solar electrodynamics, and deep space RF links used by NASA and ESA engineers.",
@@ -448,9 +406,6 @@ export const translations = {
     formula_batt_sub: "Onboard Electrochemical Storage",
     formula_batt_exp: "During surface nights or orbital eclipses behind the planet, solar arrays generate 0W. The probe relies entirely on its lithium-ion battery reserves.",
 
-    // ------------------------------------------------------------------------
-    // TEAM CARDS
-    // ------------------------------------------------------------------------
     team_badge: "🇦🇴 National Representation • Luanda, Angola",
     team_title: "Multiverso Team • Software Engineering Colleagues",
     team_desc: "We are a team of 5 Angolan software engineering colleagues and students, united by our passion for space exploration, computational science, and drive to win the NASA Space Apps Challenge 2026.",
@@ -473,9 +428,6 @@ export const translations = {
     member_5_role: "Frontend Engineering & 3D Visual Interface",
     member_5_focus: "User Experience • Real-time Telemetry • 3D Aerospace Design",
 
-    // ------------------------------------------------------------------------
-    // MISSION BUILDER CARDS
-    // ------------------------------------------------------------------------
     builder_step_1: "CELESTIAL DESTINATION (UNIVERSE)",
     builder_step_1_sub: "Agency Budget:",
     builder_step_2: "SPACECRAFT ARCHITECTURE",
@@ -500,7 +452,6 @@ export const translations = {
     builder_launcher_cap: "Capacity:",
     builder_launcher_reliability: "Reliability:",
 
-    // Vehicle Types
     type_orbiter_name: "Orbiter",
     type_orbiter_desc: "Orbital probe for global reconnaissance, altimetry, and telecommunications relay.",
     type_lander_name: "Lander",
@@ -508,7 +459,6 @@ export const translations = {
     type_rover_name: "Rover",
     type_rover_desc: "Mobile robotic lab with articulated wheels to traverse geological formations.",
 
-    // Scientific Instruments
     inst_camera_name: "Multi-Spectral Optical Camera",
     inst_camera_desc: "High-resolution color surface mapping and topographical imaging.",
     inst_spectrometer_name: "Infrared Spectrometer",
@@ -524,12 +474,10 @@ export const translations = {
     inst_magnetometer_name: "Atomic Fluxgate Magnetometer",
     inst_magnetometer_desc: "Measures planetary magnetic fields and solar wind interactions.",
 
-    // Antennas
     antenna_low_name: "Omnidirectional Antenna (Low Gain)",
     antenna_medium_name: "Medium Parabolic Dish (1.4m)",
     antenna_high_name: "High-Gain Parabolic Dish (2.4m)",
 
-    // Launchers
     launcher_small_name: "Small Launcher (Electron / Vega)",
     launcher_small_desc: "Low cost and fast turnaround, perfect for cubesats and lightweight probes.",
     launcher_medium_name: "Medium Launcher (Falcon 9 / Ariane 62)",
@@ -537,7 +485,6 @@ export const translations = {
     launcher_heavy_name: "Heavy-Lift Super Launcher (SLS / Falcon Heavy)",
     launcher_heavy_desc: "Maximum translunar injection capacity for flagship interplanetary science.",
 
-    // Presets
     preset_title: "Historic Reference Missions:",
     preset_mro_tag: "NASA Classic",
     preset_mro_desc: "High-data Mars orbital probe with 3m high-gain dish and shallow subsurface radar.",
@@ -546,9 +493,6 @@ export const translations = {
     preset_dragonfly_tag: "Titan Extreme Challenge",
     preset_dragonfly_desc: "Deep atmospheric lander investigating prebiotic organic chemistry on Titan.",
 
-    // ------------------------------------------------------------------------
-    // TELEMETRY HUD
-    // ------------------------------------------------------------------------
     hud_title: "Flight Telemetry (Real-Time)",
     hud_flight_approved: "FLIGHT QUALIFIED",
     hud_flight_anomaly: "ANOMALIES DETECTED",
@@ -569,9 +513,6 @@ export const translations = {
     hud_launch_btn: "🚀 Launch 3D Flight Game",
     hud_certificate_btn: "Issue Official Certificate",
 
-    // ------------------------------------------------------------------------
-    // 3D FLIGHT SIMULATION
-    // ------------------------------------------------------------------------
     game_mode_earth: "Level 1: Earth Launch",
     game_mode_cruise: "Level 2: Deep Space & Fleet",
     game_mode_orbit: "Level 3: Target Orbit",
@@ -609,9 +550,6 @@ export const translations = {
     obj_planetary_insertion: "Execute retrograde burn for mapping orbit insertion",
     obj_surface_landing: "Perform precision soft touchdown at speed < 4.0 m/s",
 
-    // ------------------------------------------------------------------------
-    // MODALS & CERTIFICATES
-    // ------------------------------------------------------------------------
     modal_launch_title: "OPERATIONS CENTER • FLIGHT SEQUENCE",
     modal_target: "Target:",
     modal_vehicle: "Vehicle:",
@@ -625,9 +563,6 @@ export const translations = {
     cert_status_approved: "MISSION FLIGHT QUALIFIED",
     cert_status_failed: "MISSION DEFICIENT (ENGINEERING VIOLATIONS)",
 
-    // ------------------------------------------------------------------------
-    // FOOTER
-    // ------------------------------------------------------------------------
     footer_desc: "Interactive Space Engineering Simulator and 3D Flight Game created for the NASA Space Apps Challenge 2026 by Angolan software engineering students.",
     footer_team_title: "Engineering Team",
     footer_physics_title: "Physics & Equations",
@@ -636,9 +571,6 @@ export const translations = {
   },
 
   fr: {
-    // ------------------------------------------------------------------------
-    // NAVBAR
-    // ------------------------------------------------------------------------
     nav_title: "MULTIVERSO",
     nav_subtitle: "Simulateur de Missions Spatiales • Étudiants en Génie Logiciel",
     nav_challenge: "Le Défi",
@@ -651,9 +583,6 @@ export const translations = {
     sound_enable: "Activer les effets sonores",
     sound_disable: "Désactiver les effets sonores",
 
-    // ------------------------------------------------------------------------
-    // HERO
-    // ------------------------------------------------------------------------
     hero_badge: "NASA Space Apps Challenge 2026",
     hero_team_badge: "🇦🇴 Étudiants en Génie Logiciel • Angola",
     hero_title_1: "Concevez votre mission spatiale.",
@@ -675,9 +604,6 @@ export const translations = {
     hero_propulsion_eff: "Efficacité Propulsive",
     hero_dsn_link: "Réseau Deep Space (DSN)",
 
-    // ------------------------------------------------------------------------
-    // DÉFI NASA & PILIERS
-    // ------------------------------------------------------------------------
     challenge_badge: "Défi Officiel NASA Space Apps 2026",
     challenge_title: "L'Art de l'Ingénierie Spatiale : Compromis et Contraintes",
     challenge_desc: "Pour la plupart des étudiants, concevoir une sonde semble se résumer à choisir des pièces. En réalité, chaque décision détermine la mécanique orbitale, la survie pendant les éclipses et la viabilité budgétaire.",
@@ -709,9 +635,6 @@ export const translations = {
     pillar_budget_details: "Du coût du lanceur aux spectromètres et générateurs RTG, les missions doivent impérativement respecter le plafond fixé par les agences spatiales.",
     pillar_budget_warning: "Les projets dépassant le budget alloué sont immédiatement rejetés par les comités d'examen de vol.",
 
-    // ------------------------------------------------------------------------
-    // DESTINATIONS CARDS
-    // ------------------------------------------------------------------------
     dest_badge: "Cibles du Système Solaire",
     dest_title: "Chaque Monde, Une Nouvelle Réalité Physique",
     dest_desc: "La physique orbitale et les défis environnementaux changent radicalement d'un corps céleste à l'autre. De la poussière fine de Mars aux océans gelés d'Europe.",
@@ -744,9 +667,6 @@ export const translations = {
     dest_titan_desc: "Distance extrême (9,58 UA). L'atmosphère dense d'azote permet un atterrissage sous parachute sans lourd bouclier thermique, mais la lumière ne pénètre pas.",
     dest_titan_atmo: "Dense (98% Azote)",
 
-    // ------------------------------------------------------------------------
-    // FÓRMULAS FÍSICAS
-    // ------------------------------------------------------------------------
     physics_badge: "Physique Réelle Implémentée",
     physics_title: "Formules Scientifiques du Jeu",
     physics_desc: "Multiverso repose sur les lois de la mécanique orbitale, de l'électrodynamique solaire et des liaisons radio interplanétaires utilisées par les ingénieurs de la NASA et de l'ESA.",
@@ -763,9 +683,6 @@ export const translations = {
     formula_batt_sub: "Stockage Électrochimique Embarqué",
     formula_batt_exp: "Pendant les nuits à la surface ou les éclipses en orbite, les panneaux génèrent 0W. La sonde dépend intégralement de sa réserve de batteries lithium-ion.",
 
-    // ------------------------------------------------------------------------
-    // EQUIPA DE ESTUDANTES
-    // ------------------------------------------------------------------------
     team_badge: "🇦🇴 Représentation Nationale • Luanda, Angola",
     team_title: "Équipe Multiverso • Collègues en Génie Logiciel",
     team_desc: "Nous sommes un groupe de 5 collègues et étudiants angolais en Génie Logiciel, unis par la passion de l'exploration spatiale, de l'informatique et la volonté de remporter le NASA Space Apps Challenge 2026.",
@@ -788,9 +705,6 @@ export const translations = {
     member_5_role: "Génie Frontend & Interface 3D Visuelle",
     member_5_focus: "Expérience Utilisateur • Télémétrie en Temps Réel • Design Aérospatial 3D",
 
-    // ------------------------------------------------------------------------
-    // CARDS DO CONSTRUTOR DE MISSÕES
-    // ------------------------------------------------------------------------
     builder_step_1: "DESTINATION CÉLESTE (UNIVERS)",
     builder_step_1_sub: "Budget de l'Agence :",
     builder_step_2: "ARCHITECTURE DU VAISSEAU",
@@ -815,7 +729,6 @@ export const translations = {
     builder_launcher_cap: "Capacité :",
     builder_launcher_reliability: "Fiabilité :",
 
-    // Types de Véhicules
     type_orbiter_name: "Orbiteur",
     type_orbiter_desc: "Sonde orbitale pour la cartographie globale, l'altimétrie et le relais de communication.",
     type_lander_name: "Atterrisseur (Lander)",
@@ -823,7 +736,6 @@ export const translations = {
     type_rover_name: "Rover Mobile",
     type_rover_desc: "Laboratoire mobile à roues articulées pour explorer plusieurs sites géologiques.",
 
-    // Instruments Scientifiques
     inst_camera_name: "Caméra Optique Multi-spectrale",
     inst_camera_desc: "Cartographie couleur haute résolution de la surface et topographie.",
     inst_spectrometer_name: "Spectromètre Infrarouge",
@@ -839,12 +751,10 @@ export const translations = {
     inst_magnetometer_name: "Magnétomètre Fluxgate",
     inst_magnetometer_desc: "Mesure des champs magnétiques planétaires et interaction avec le vent solaire.",
 
-    // Antennes
     antenna_low_name: "Antenne Omnidirectionnelle (Faible Gain)",
     antenna_medium_name: "Antenne Parabolique Moyenne (1.4m)",
     antenna_high_name: "Antenne Parabolique Grand Gain (2.4m)",
 
-    // Lanceurs
     launcher_small_name: "Lanceur Léger (Electron / Vega)",
     launcher_small_desc: "Coût réduit et cadence rapide, parfait pour cubesats et sondes légères.",
     launcher_medium_name: "Lanceur Moyen (Falcon 9 / Ariane 62)",
@@ -852,7 +762,6 @@ export const translations = {
     launcher_heavy_name: "Super-Lanceur Lourd (SLS / Falcon Heavy)",
     launcher_heavy_desc: "Capacité maximale d'injection translunaire pour les grandes missions scientifiques.",
 
-    // Presets
     preset_title: "Configurations Historiques de Référence :",
     preset_mro_tag: "Classique NASA",
     preset_mro_desc: "Sonde orbitale martienne à haut débit de données avec parabole de 3m et radar de glace.",
@@ -861,9 +770,6 @@ export const translations = {
     preset_dragonfly_tag: "Défi Extrême sur Titan",
     preset_dragonfly_desc: "Atterrisseur dans la dense atmosphère de Titan pour analyser la chimie prébiotique.",
 
-    // ------------------------------------------------------------------------
-    // TÉLÉMÉTRIE HUD
-    // ------------------------------------------------------------------------
     hud_title: "Télémétrie de Vol (Temps Réel)",
     hud_flight_approved: "APPROUVÉ POUR LE VOL",
     hud_flight_anomaly: "ANOMALIES DÉTECTÉES",
@@ -884,9 +790,6 @@ export const translations = {
     hud_launch_btn: "🚀 Lancer le Jeu Spatial 3D",
     hud_certificate_btn: "Délivrer le Certificat Officiel",
 
-    // ------------------------------------------------------------------------
-    // SIMULATION DE VOL 3D
-    // ------------------------------------------------------------------------
     game_mode_earth: "Niveau 1 : Lancement Terrestre",
     game_mode_cruise: "Niveau 2 : Espace Profond & Flotte",
     game_mode_orbit: "Niveau 3 : Orbite Cible",
@@ -924,9 +827,6 @@ export const translations = {
     obj_planetary_insertion: "Effectuer un allumage rétrograde pour l'orbite de cartographie",
     obj_surface_landing: "Réussir un atterrissage en douceur à vitesse < 4.0 m/s",
 
-    // ------------------------------------------------------------------------
-    // FENÊTRES MODALES & CERTIFICATS
-    // ------------------------------------------------------------------------
     modal_launch_title: "CENTRE DES OPÉRATIONS • SÉQUENCE DE VOL",
     modal_target: "Cible :",
     modal_vehicle: "Vaisseau :",
@@ -940,9 +840,6 @@ export const translations = {
     cert_status_approved: "MISSION VALIDÉE POUR LE VOL",
     cert_status_failed: "MISSION NON CONFORME (VIOLATION DE CONTRAINTES)",
 
-    // ------------------------------------------------------------------------
-    // FOOTER
-    // ------------------------------------------------------------------------
     footer_desc: "Simulateur Interactif et Jeu Spatial 3D conçu pour le NASA Space Apps Challenge 2026 par des étudiants angolais en Génie Logiciel.",
     footer_team_title: "Équipe d'Ingénierie",
     footer_physics_title: "Physique & Équations",
@@ -951,12 +848,11 @@ export const translations = {
   },
 };
 
-// Deteta automaticamente a linguagem do navegador (Português, Inglês ou Francês)
 export function getInitialLanguage() {
   if (typeof window === "undefined" || !window.navigator) return "pt";
   const userLang = (window.navigator.language || window.navigator.userLanguage || "pt").toLowerCase();
   if (userLang.startsWith("pt")) return "pt";
   if (userLang.startsWith("fr")) return "fr";
   if (userLang.startsWith("en")) return "en";
-  return "pt"; // Padrão caso não seja detetado
+  return "pt";
 }

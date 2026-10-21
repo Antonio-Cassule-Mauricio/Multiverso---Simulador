@@ -1,1107 +1,1216 @@
 // ============================================================================
-// COMPONENTE 3D: SpaceCanvas3D (Simulador de Voo Espacial 3D, Pouso e Frota)
-// Responsabilidade: Simulação 3D completa com pilotagem em tempo real, 4 níveis
-// (Terra, Espaço Profundo com outras naves, Órbita e Pouso na Superfície),
-// vida da nave, propelente, cockpit HUD em 1ª e 3ª pessoa e encontros espaciais.
+// COMPONENTE 3D: SpaceCanvas3D (Simulador e Jogo de Missões Reais da NASA 3D)
+// Responsabilidade: Simulação 3D imersiva e interativa das missões históricas
+// e modernas da NASA:
+// 1. Apollo 11: Pouso Lunar do Módulo Eagle em Mare Tranquillitatis
+// 2. ISS: Rendezvous e Acoplagem Orbital na Estação Espacial Internacional
+// 3. Mars 2020: Pouso, condução do Rover Perseverance e voo do drone Ingenuity
+// 4. Europa Clipper: Assistência gravitacional em Júpiter e sondagem do oceano
+//
+// Inclui física em tempo real, múltiplos sítios de pouso, piloto automático SAS,
+// auxílio de pouso suave, painel de comandos táteis na tela, relógio MET,
+// visualizador de transferência de Hohmann e caderneta de medalhas da NASA.
+// Sem confetes invasivos que obstruam a visão ou a leitura do utilizador.
+// Comentários: Todos em Português conforme solicitado pela equipa.
 // ============================================================================
 
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import * as THREE from 'three';
-import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import confetti from 'canvas-confetti';
-import { playSound } from '../../utils/audio';
-import {
-  Flame, Radio, Sparkles, ChevronDown, ChevronUp, Heart,
-  Compass, Eye, CheckCircle2, AlertOctagon, MessageSquare,
-  Crosshair, Shield, Zap, Flag, Award, Send
+import { 
+  Compass, Shield, Flame, Radio, Eye, 
+  Sparkles, CheckCircle2, Flag, FlaskConical,
+  Award, Zap, Target,
+  ArrowUp, ArrowLeft, ArrowRight
 } from 'lucide-react';
+import { playSound } from '../../utils/audio';
+import { nasaGameMissions } from '../../data/gameMissions';
+import TrajectoryOrbitModal from './TrajectoryOrbitModal';
+import AstronautLogbookModal from './AstronautLogbookModal';
 
 export default function SpaceCanvas3D({
-  missionConfig,
-  result,
-  gameMode = 'orbit',
-  setGameMode,
-  soundEnabled,
-  onScienceBonus,
-  lang = 'pt',
-  t = (k) => k,
+  soundEnabled = true,
+  onOpenCertificate,
 }) {
   const mountRef = useRef(null);
-  const sceneRef = useRef(null);
-  const rendererRef = useRef(null);
-  const cameraRef = useRef(null);
-  const controlsRef = useRef(null);
-  const spacecraftGroupRef = useRef(null);
-  const planetMeshRef = useRef(null);
-  const earthMeshRef = useRef(null);
-  const otherVesselsGroupRef = useRef(null);
-  const asteroidFieldRef = useRef(null);
-  const surfaceTerrainRef = useRef(null);
-  const warpLinesRef = useRef(null);
-  const thrusterPlumesRef = useRef([]);
-  const rcsPuffsRef = useRef([]);
 
-  // Estados de voo espacial e estatísticas de jogo (Vida, Combustível, Bateria)
-  const [flightStage, setFlightStage] = useState('earth'); // 'earth' | 'cruise' | 'orbit' | 'land'
-  const [cameraMode, setCameraMode] = useState('chase'); // 'chase' | 'cockpit' | 'free'
-  const [shipHealth, setShipHealth] = useState(100); // Vida / Integridade do casco (%)
-  const [propellantRemaining, setPropellantRemaining] = useState(1500); // Delta-v restante (m/s)
-  const [batteryLevel, setBatteryLevel] = useState(100); // Bateria (%)
-  const [altitudeKm, setAltitudeKm] = useState(480); // Altitude atual
-  const [velocityKmS, setVelocityKmS] = useState(7.8); // Velocidade orbital
-  const [verticalSpeed, setVerticalSpeed] = useState(0); // Velocidade de descida vertical (m/s)
+  // Missão da NASA ativa no momento (Apollo 11, ISS, Mars 2020, Europa Clipper)
+  const [selectedMissionId, setSelectedMissionId] = useState('apollo11');
+  const currentMission = nasaGameMissions.find((m) => m.id === selectedMissionId) || nasaGameMissions[0];
+
+  // Sítio de pouso selecionado dentro da missão
+  const [selectedSiteId, setSelectedSiteId] = useState(currentMission.landingSites[0].id);
+
+  // Modo de controlo do jogador: 'flight' (nave no espaço) | 'rover' (conduzir rover) | 'drone' (voar Ingenuity)
+  const [playerControlMode, setPlayerControlMode] = useState('flight');
+
+  // Modo de câmara: 'chase' (3ª pessoa) | 'cockpit' (1ª pessoa com HUD) | 'orbit' (livre)
+  const [cameraMode, setCameraMode] = useState('chase');
+
+  // Sistemas de Voo da NASA: SAS (Estabilização Giroscópica) e Auxílio de Pouso Suave
+  const [sasEnabled, setSasEnabled] = useState(true);
+  const [autoHoverEnabled, setAutoHoverEnabled] = useState(false);
+
+  // Indicadores de Voo e Voo Espacial
+  const [hullIntegrity, setHullIntegrity] = useState(100);
+  const [fuelPercentage, setFuelPercentage] = useState(100);
+  const [verticalVelocity, setVerticalVelocity] = useState(0);
+  const [horizontalSpeed, setHorizontalSpeed] = useState(0);
+  const [currentAltitude, setCurrentAltitude] = useState(1200); // metros
+  const [sciencePoints, setSciencePoints] = useState(0);
+
+  // Relógio MET (Mission Elapsed Time da NASA)
+  const [metSeconds, setMetSeconds] = useState(0);
+
+  // Estados de Missão
+  const [touchdownOccurred, setTouchdownOccurred] = useState(false);
   const [touchdownSuccess, setTouchdownSuccess] = useState(false);
-  const [touchdownCrashed, setTouchdownCrashed] = useState(false);
-  const [sampleCollected, setSampleCollected] = useState(false);
+  const [dockingSuccess, setDockingSuccess] = useState(false);
   const [flagPlanted, setFlagPlanted] = useState(false);
-  const [isThrusting, setIsThrusting] = useState(false);
-  const [isWarping, setIsWarping] = useState(false);
-  const [isDockCollapsed, setIsDockCollapsed] = useState(false);
-  const [collectedScience, setCollectedScience] = useState(0);
+  const [sampleCollected, setSampleCollected] = useState(false);
+  const [radioTransmission, setRadioTransmission] = useState(null);
 
-  // Refs de sincronização de alta performance para o loop Three.js
-  const flightStageRef = useRef(flightStage);
-  const cameraModeRef = useRef(cameraMode);
-  const isThrustingRef = useRef(isThrusting);
-  const isWarpingRef = useRef(isWarping);
-  const soundEnabledRef = useRef(soundEnabled);
+  // Notificação elegante de conquista (substitui confetes invasivos para nunca obstruir a leitura)
+  const [badgeToast, setBadgeToast] = useState(null);
 
-  useEffect(() => { flightStageRef.current = flightStage; }, [flightStage]);
-  useEffect(() => { cameraModeRef.current = cameraMode; }, [cameraMode]);
-  useEffect(() => { isThrustingRef.current = isThrusting; }, [isThrusting]);
-  useEffect(() => { isWarpingRef.current = isWarping; }, [isWarping]);
-  useEffect(() => { soundEnabledRef.current = soundEnabled; }, [soundEnabled]);
+  // Modais de Trajetória e Caderneta de Voo
+  const [isTrajectoryModalOpen, setIsTrajectoryModalOpen] = useState(false);
+  const [isLogbookModalOpen, setIsLogbookModalOpen] = useState(false);
 
-  // Sistema de Encontros com Outras Naves no Espaço Profundo (Frota Angolana & Internacional)
-  const [activeEncounter, setActiveEncounter] = useState(null);
-  const [encounterMessage, setEncounterMessage] = useState(null);
-  const [hailCompleted, setHailCompleted] = useState(false);
+  // Objetivos cumpridos da missão ativa
+  const [completedObjectiveIds, setCompletedObjectiveIds] = useState([]);
 
-  // Objetivos de missão completados
-  const [completedObjectives, setCompletedObjectives] = useState({
-    earth: false,
-    cruise: false,
-    orbit: false,
-    land: false,
-  });
+  // Referências mutáveis para o loop de física e animação sem re-renderizar
+  const animFrameRef = useRef(null);
+  const sceneRef = useRef(null);
+  const cameraRef = useRef(null);
+  const rendererRef = useRef(null);
 
-  // Lista de outras naves viajando pelo sistema solar
-  const fleetVessels = [
-    {
-      id: 'rainha_ginga',
-      name: '🇦🇴 Sonda Rainha Ginga (Angola Deep Space)',
-      dist: '1.2 km',
-      pilot: 'Comandante António Maurício',
-      msg: {
-        pt: "📡 Sinal de Luanda recebido da Sonda Rainha Ginga: 'Aqui é a equipa angolana de exploração! Confirmamos telemetria sincronizada e vetor translunar ideal. Dados orbitais compartilhados!' (+50 pts Ciência)",
-        en: "📡 Luanda Signal from Queen Ginga Probe: 'This is the Angolan deep space mission! We confirm synced telemetry and clean interplanetary trajectory. Orbit data shared!' (+50 pts Science)",
-        fr: "📡 Signal de Luanda reçu de la Sonde Reine Ginga : 'Ici l'équipe angolaise d'exploration ! Télémétrie synchronisée et trajectoire interplanétaire nominale. Données partagées !' (+50 pts Science)",
-      },
-      pts: 50,
-    },
-    {
-      id: 'voyager',
-      name: '🛸 Voyager 1 (NASA Interstellar Probe)',
-      dist: '4.8 km',
-      pilot: 'Missão Interestelar NASA JPL',
-      msg: {
-        pt: "📡 Transmissão DSN da Voyager 1: 'O Disco de Ouro transporta as saudações da Terra para o infinito cósmico. Medições de plasma interestelar transferidas.' (+40 pts Ciência)",
-        en: "📡 DSN Transmission from Voyager 1: 'The Golden Record carries Earth's greetings into the infinite cosmos. Interstellar plasma readings transferred.' (+40 pts Science)",
-        fr: "📡 Signal DSN de Voyager 1 : 'Le Golden Record transporte les salutations de la Terre. Mesures de plasma interstellaire transférées.' (+40 pts Science)",
-      },
-      pts: 40,
-    },
-    {
-      id: 'jwst',
-      name: '🔭 Telescópio James Webb (JWST)',
-      dist: '3.1 km',
-      pilot: 'Observatório Espacial Infravermelho',
-      msg: {
-        pt: "🔭 Transmissão do Telescópio James Webb: 'Identificámos assinaturas espectrais de água e gelo na rota do vosso planeta destino. Coordenadas enviadas!' (+35 pts Ciência)",
-        en: "🔭 Transmission from James Webb Telescope: 'Infrared signatures of water ice detected along your trajectory. Coordinates sent!' (+35 pts Science)",
-        fr: "🔭 Transmission du télescope James Webb : 'Signatures spectrales d'eau détectées sur votre trajectoire vers la planète cible. Données partagées !' (+35 pts Science)",
-      },
-      pts: 35,
-    },
-    {
-      id: 'kwanza',
-      name: '🇦🇴 Explorador Kwanza (Sonda de Apoio)',
-      dist: '2.4 km',
-      pilot: 'Engenheiro Edmilson Segredo',
-      msg: {
-        pt: "📡 Explorador Kwanza: 'Sistemas elétricos e enlaces DSN funcionando a 100%. Boa sorte na queima de inserção e pouso!' (+30 pts Ciência)",
-        en: "📡 Kwanza Explorer: 'Electrical systems and DSN link operating at 100%. Good luck with the planetary insertion burn and landing!' (+30 pts Science)",
-        fr: "📡 Explorateur Kwanza : 'Systèmes électriques et liaison DSN à 100%. Bonne chance pour la mise en orbite et l'atterrissage !' (+30 pts Science)",
-      },
-      pts: 30,
-    },
-  ];
+  // Entidades 3D da cena
+  const playerVehicleRef = useRef(null);
+  const issStationRef = useRef(null);
+  const enginePlumeRef = useRef(null);
+  const droneGroupRef = useRef(null);
 
-  // ==========================================================================
-  // INICIALIZAÇÃO DA CENA THREE.JS
-  // ==========================================================================
+  // Vetores de movimento e física da nave
+  const velocityRef = useRef(new THREE.Vector3(0, -2.5, -4.0));
+  const positionRef = useRef(new THREE.Vector3(0, 30, 0));
+  const rotationRef = useRef(new THREE.Euler(0, 0, 0));
+  const isThrustingRef = useRef(false);
+  const isRCSLeftRef = useRef(false);
+  const isRCSRightRef = useRef(false);
+  const isBrakingRef = useRef(false);
+
+  // Atualização do relógio de missão (Mission Elapsed Time)
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setMetSeconds((prev) => prev + 1);
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // Formatação do MET em formato NASA: T+ 00:04:12
+  const formatMET = (totalSec) => {
+    const m = Math.floor(totalSec / 60).toString().padStart(2, '0');
+    const s = (totalSec % 60).toString().padStart(2, '0');
+    return `T+ 00:${m}:${s}`;
+  };
+
+  // Marcar objetivo como cumprido com notificação limpa e elegante (sem cobrir o ecrã)
+  const markObjectiveComplete = useCallback((objId, reward, title = 'Objetivo Cumprido') => {
+    setCompletedObjectiveIds((prev) => {
+      if (prev.includes(objId)) return prev;
+      playSound('success', soundEnabled);
+      setSciencePoints((pts) => pts + reward);
+
+      // Exibir toast elegante no canto superior sem tapar o jogo
+      setBadgeToast({
+        title,
+        reward,
+      });
+      setTimeout(() => {
+        setBadgeToast(null);
+      }, 3500);
+
+      return [...prev, objId];
+    });
+  }, [soundEnabled]);
+
+  // Reiniciar estado ao trocar de missão da NASA
+  const handleSelectMission = (missionId) => {
+    playSound('warp', soundEnabled);
+    setSelectedMissionId(missionId);
+    const mission = nasaGameMissions.find((m) => m.id === missionId);
+    if (mission) {
+      setSelectedSiteId(mission.landingSites[0].id);
+      setFuelPercentage(mission.initialFuel);
+    }
+    setPlayerControlMode('flight');
+    setHullIntegrity(100);
+    setTouchdownOccurred(false);
+    setTouchdownSuccess(false);
+    setDockingSuccess(false);
+    setFlagPlanted(false);
+    setSampleCollected(false);
+    setCompletedObjectiveIds([]);
+    setRadioTransmission(null);
+    setAutoHoverEnabled(false);
+    setMetSeconds(0);
+
+    // Reposicionar nave
+    if (positionRef.current) {
+      positionRef.current.set(0, missionId === 'iss_docking' ? 5 : 45, missionId === 'iss_docking' ? 40 : 0);
+      velocityRef.current.set(0, missionId === 'iss_docking' ? 0 : -2.0, missionId === 'iss_docking' ? -0.8 : -3.0);
+      rotationRef.current.set(0, 0, 0);
+    }
+  };
+
+  // ============================================================================
+  // CRIAÇÃO E RENDERIZAÇÃO DO MUNDO 3D (Three.js)
+  // ============================================================================
   useEffect(() => {
     const container = mountRef.current;
     if (!container) return;
 
-    // Detetar se o renderizador de hardware está disponível
-    const isSoftwareGl = (() => {
-      const gl = document.createElement('canvas').getContext('webgl2');
-      if (!gl) return true;
-      const ext = gl.getExtension('WEBGL_debug_renderer_info');
-      const param = ext ? ext.UNMASKED_RENDERER_WEBGL : gl.RENDERER;
-      const gpu = String(gl.getParameter(param));
-      gl.getExtension('WEBGL_lose_context')?.loseContext();
-      return /SwiftShader|llvmpipe|softpipe|Software|Basic Render/i.test(gpu);
-    })();
+    const width = container.clientWidth || 900;
+    const height = container.clientHeight || 560;
 
-    // 1. Renderizador WebGL de alta fidelidade
-    const renderer = new THREE.WebGLRenderer({
-      antialias: !isSoftwareGl,
-      powerPreference: 'high-performance',
-      alpha: true,
-    });
-    renderer.outputColorSpace = THREE.SRGBColorSpace;
-    renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.35;
-    renderer.setPixelRatio(isSoftwareGl ? 1 : Math.min(window.devicePixelRatio, 2));
-    renderer.setSize(container.clientWidth, container.clientHeight);
-    renderer.shadowMap.enabled = !isSoftwareGl;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-
-    container.appendChild(renderer.domElement);
-    rendererRef.current = renderer;
-
-    // 2. Cena & Ambiente PBR
+    // 1. Cena com nevoeiro espacial subtil
     const scene = new THREE.Scene();
     sceneRef.current = scene;
+    scene.fog = new THREE.FogExp2(0x030712, 0.0006);
 
-    const pmremGenerator = new THREE.PMREMGenerator(renderer);
-    scene.environment = pmremGenerator.fromScene(new RoomEnvironment(), 0.04).texture;
-    pmremGenerator.dispose();
-
-    // 3. Câmara e Controlos
-    const camera = new THREE.PerspectiveCamera(
-      45,
-      container.clientWidth / container.clientHeight,
-      0.1,
-      4000
-    );
-    camera.position.set(0, 4, 12);
+    // 2. Câmara de Perspetiva
+    const camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 8000);
     cameraRef.current = camera;
+    camera.position.set(0, 20, 50);
 
-    const controls = new OrbitControls(camera, renderer.domElement);
-    controls.enableDamping = true;
-    controls.dampingFactor = 0.05;
-    controls.maxDistance = 250;
-    controls.minDistance = 2.0;
-    controlsRef.current = controls;
+    // 3. Renderizador WebGL de alta qualidade
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
+    rendererRef.current = renderer;
+    renderer.setSize(width, height);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    container.replaceChildren(renderer.domElement);
 
-    // 4. Luz Solar Direcional e Luz Ambiente Nebular
-    const sunLight = new THREE.DirectionalLight(0xfff8ee, 4.2);
-    sunLight.position.set(60, 40, 50);
-    sunLight.castShadow = !isSoftwareGl;
+    // 4. Luzes: Sol Cósmico Direcional e Luz Ambiente
+    const ambientLight = new THREE.AmbientLight(0x334155, 1.4);
+    scene.add(ambientLight);
+
+    const sunLight = new THREE.DirectionalLight(0xfff8eb, 3.5);
+    sunLight.position.set(250, 300, 180);
+    sunLight.castShadow = true;
+    sunLight.shadow.mapSize.width = 2048;
+    sunLight.shadow.mapSize.height = 2048;
     scene.add(sunLight);
 
-    const hemiLight = new THREE.HemisphereLight(0x38bdf8, 0x05070e, 0.95);
-    scene.add(hemiLight);
+    // Luz de preenchimento azul suave da Terra/Planeta
+    const planetBounceLight = new THREE.DirectionalLight(0x38bdf8, 0.8);
+    planetBounceLight.position.set(-150, -100, -100);
+    scene.add(planetBounceLight);
 
-    // 5. Starfield Procedural com 4000 estrelas
+    // 5. Campo de Estrelas Cósmico
     const starGeo = new THREE.BufferGeometry();
     const starCount = 4000;
     const starPos = new Float32Array(starCount * 3);
-    const starColors = new Float32Array(starCount * 3);
+    const starCol = new Float32Array(starCount * 3);
 
     for (let i = 0; i < starCount * 3; i += 3) {
-      const r = 800 + Math.random() * 600;
-      const theta = Math.random() * Math.PI * 2;
-      const phi = Math.acos(Math.random() * 2 - 1);
-      starPos[i] = r * Math.sin(phi) * Math.cos(theta);
-      starPos[i + 1] = r * Math.sin(phi) * Math.sin(theta);
-      starPos[i + 2] = r * Math.cos(phi);
+      starPos[i] = (Math.random() - 0.5) * 5000;
+      starPos[i + 1] = (Math.random() - 0.5) * 5000;
+      starPos[i + 2] = (Math.random() - 0.5) * 5000;
 
-      const tint = Math.random();
-      if (tint > 0.8) {
-        starColors[i] = 0.38; starColors[i + 1] = 0.85; starColors[i + 2] = 1.0;
-      } else if (tint < 0.25) {
-        starColors[i] = 1.0; starColors[i + 1] = 0.7; starColors[i + 2] = 0.35;
+      const temp = Math.random();
+      if (temp > 0.8) {
+        starCol[i] = 1.0; starCol[i + 1] = 0.8; starCol[i + 2] = 0.7; // Alaranjada
+      } else if (temp > 0.4) {
+        starCol[i] = 0.8; starCol[i + 1] = 0.9; starCol[i + 2] = 1.0; // Azulada
       } else {
-        starColors[i] = 0.95; starColors[i + 1] = 0.95; starColors[i + 2] = 1.0;
+        starCol[i] = 1.0; starCol[i + 1] = 1.0; starCol[i + 2] = 1.0; // Branca
       }
     }
     starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
-    starGeo.setAttribute('color', new THREE.BufferAttribute(starColors, 3));
-    const starField = new THREE.Points(
-      starGeo,
-      new THREE.PointsMaterial({ size: 1.8, vertexColors: true, transparent: true, opacity: 0.95 })
-    );
-    scene.add(starField);
+    starGeo.setAttribute('color', new THREE.BufferAttribute(starCol, 3));
 
-    // 6. Linhas de Velocidade Hiperespaço (Warp Lines)
-    const warpCount = 200;
-    const warpGeo = new THREE.BufferGeometry();
-    const warpPositions = new Float32Array(warpCount * 6);
-    for (let i = 0; i < warpCount; i++) {
-      const x = (Math.random() - 0.5) * 40;
-      const y = (Math.random() - 0.5) * 40;
-      const z = (Math.random() - 0.5) * 80;
-      warpPositions[i * 6] = x;
-      warpPositions[i * 6 + 1] = y;
-      warpPositions[i * 6 + 2] = z;
-      warpPositions[i * 6 + 3] = x;
-      warpPositions[i * 6 + 4] = y;
-      warpPositions[i * 6 + 5] = z - 6;
-    }
-    warpGeo.setAttribute('position', new THREE.BufferAttribute(warpPositions, 3));
-    const warpMat = new THREE.LineBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.0 });
-    const warpLines = new THREE.LineSegments(warpGeo, warpMat);
-    scene.add(warpLines);
-    warpLinesRef.current = warpLines;
-
-    // 7. Grupo da Nave Espacial do Jogador
-    const spacecraftGroup = new THREE.Group();
-    scene.add(spacecraftGroup);
-    spacecraftGroupRef.current = spacecraftGroup;
-
-    // 8. Grupo de Outras Naves Viajando pelo Sistema Solar
-    const otherVesselsGroup = new THREE.Group();
-    scene.add(otherVesselsGroup);
-    otherVesselsGroupRef.current = otherVesselsGroup;
-
-    // Construir modelo 3D da Sonda Rainha Ginga (Angola)
-    const gingaGroup = new THREE.Group();
-    gingaGroup.position.set(12, 1.5, -14);
-    // Corpo cúbico dourado com badge
-    const gBus = new THREE.Mesh(new THREE.BoxGeometry(1.6, 1.6, 2.2), new THREE.MeshStandardMaterial({ color: 0xd97706, metalness: 0.9, roughness: 0.2 }));
-    gingaGroup.add(gBus);
-    // Painéis solares com bandeira
-    const gWing = new THREE.Mesh(new THREE.BoxGeometry(3.6, 0.05, 0.9), new THREE.MeshStandardMaterial({ color: 0x0284c7, metalness: 0.85, roughness: 0.15 }));
-    gingaGroup.add(gWing);
-    // Antena de 1.8m
-    const gDish = new THREE.Mesh(new THREE.SphereGeometry(0.9, 16, 8, 0, Math.PI * 2, 0, Math.PI / 2.2), new THREE.MeshStandardMaterial({ color: 0xf1f5f9, metalness: 0.9 }));
-    gDish.rotation.x = -Math.PI / 2;
-    gDish.position.set(0, 1.2, 0);
-    gingaGroup.add(gDish);
-    otherVesselsGroup.add(gingaGroup);
-
-    // Construir modelo 3D da Voyager 1
-    const voyagerGroup = new THREE.Group();
-    voyagerGroup.position.set(-18, 3, -20);
-    const vDish = new THREE.Mesh(new THREE.SphereGeometry(1.9, 16, 8, 0, Math.PI * 2, 0, Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0xcccccc, metalness: 0.9 }));
-    vDish.rotation.x = Math.PI / 2;
-    voyagerGroup.add(vDish);
-    const goldRecord = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.35, 0.05, 16), new THREE.MeshStandardMaterial({ color: 0xf59e0b, metalness: 0.95, roughness: 0.1 }));
-    goldRecord.position.set(-0.6, -0.4, 0);
-    voyagerGroup.add(goldRecord);
-    otherVesselsGroup.add(voyagerGroup);
-
-    // Construir modelo 3D do Telescópio James Webb (JWST)
-    const jwstGroup = new THREE.Group();
-    jwstGroup.position.set(16, -4, -25);
-    const sunshield = new THREE.Mesh(new THREE.BoxGeometry(4.5, 0.1, 2.8), new THREE.MeshStandardMaterial({ color: 0xcbd5e1, metalness: 0.9, roughness: 0.2 }));
-    sunshield.rotation.y = Math.PI / 6;
-    jwstGroup.add(sunshield);
-    const mirror = new THREE.Mesh(new THREE.CylinderGeometry(1.4, 1.4, 0.1, 6), new THREE.MeshStandardMaterial({ color: 0xfbbf24, metalness: 0.98, roughness: 0.15 }));
-    mirror.position.set(0, 0.8, 0);
-    mirror.rotation.x = Math.PI / 3;
-    jwstGroup.add(mirror);
-    otherVesselsGroup.add(jwstGroup);
-
-    // 9. Cinturão de Asteroides no Espaço Profundo (Detritos e Meteoritos 3D)
-    const asteroidGroup = new THREE.Group();
-    scene.add(asteroidGroup);
-    asteroidFieldRef.current = asteroidGroup;
-
-    for (let a = 0; a < 35; a++) {
-      const astGeo = new THREE.DodecahedronGeometry(0.8 + Math.random() * 1.6, 1);
-      const astMat = new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.95, metalness: 0.1 });
-      const astMesh = new THREE.Mesh(astGeo, astMat);
-      astMesh.position.set(
-        (Math.random() - 0.5) * 70,
-        (Math.random() - 0.5) * 30,
-        -15 - Math.random() * 50
-      );
-      astMesh.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, 0);
-      asteroidGroup.add(astMesh);
-    }
-
-    // 10. Esfera Planetária da Terra com Atmosfera Real
-    const earthGroup = new THREE.Group();
-    earthGroup.position.set(0, -32, 0);
-    scene.add(earthGroup);
-
-    const earthCanvas = document.createElement('canvas');
-    earthCanvas.width = 512; earthCanvas.height = 256;
-    const eCtx = earthCanvas.getContext('2d');
-    eCtx.fillStyle = '#0284c7';
-    eCtx.fillRect(0, 0, 512, 256);
-    eCtx.fillStyle = '#15803d'; // Continentes
-    eCtx.beginPath();
-    eCtx.arc(150, 100, 60, 0, Math.PI * 2);
-    eCtx.arc(320, 120, 80, 0, Math.PI * 2);
-    eCtx.arc(240, 160, 50, 0, Math.PI * 2);
-    eCtx.fill();
-    eCtx.fillStyle = 'rgba(255,255,255,0.45)'; // Nuvens
-    for (let c = 0; c < 30; c++) {
-      eCtx.beginPath();
-      eCtx.arc(Math.random() * 512, Math.random() * 256, 15 + Math.random() * 30, 0, Math.PI * 2);
-      eCtx.fill();
-    }
-    const earthTexture = new THREE.CanvasTexture(earthCanvas);
-    earthTexture.colorSpace = THREE.SRGBColorSpace;
-    const earthMesh = new THREE.Mesh(
-      new THREE.SphereGeometry(28, 48, 48),
-      new THREE.MeshStandardMaterial({ map: earthTexture, roughness: 0.6, metalness: 0.15 })
-    );
-    earthGroup.add(earthMesh);
-    earthMeshRef.current = earthGroup;
-
-    // 11. Esfera do Planeta Destino (Marte, Lua, Europa, Titã)
-    const planetGroup = new THREE.Group();
-    planetGroup.position.set(0, -32, 0);
-    scene.add(planetGroup);
-
-    const pCanvas = document.createElement('canvas');
-    pCanvas.width = 512; pCanvas.height = 256;
-    const pCtx = pCanvas.getContext('2d');
-    const pGrad = pCtx.createLinearGradient(0, 0, 0, 256);
-    if (missionConfig.universe === 'moon') {
-      pGrad.addColorStop(0, '#94a3b8'); pGrad.addColorStop(1, '#64748b');
-    } else if (missionConfig.universe === 'europa') {
-      pGrad.addColorStop(0, '#bae6fd'); pGrad.addColorStop(1, '#0284c7');
-    } else if (missionConfig.universe === 'titan') {
-      pGrad.addColorStop(0, '#f59e0b'); pGrad.addColorStop(1, '#b45309');
-    } else {
-      pGrad.addColorStop(0, '#c2410c'); pGrad.addColorStop(1, '#9a3412');
-    }
-    pCtx.fillStyle = pGrad;
-    pCtx.fillRect(0, 0, 512, 256);
-    pCtx.fillStyle = 'rgba(0,0,0,0.3)';
-    for (let i = 0; i < 40; i++) {
-      pCtx.beginPath();
-      pCtx.arc(Math.random() * 512, Math.random() * 256, 5 + Math.random() * 25, 0, Math.PI * 2);
-      pCtx.fill();
-    }
-    const planetTexture = new THREE.CanvasTexture(pCanvas);
-    planetTexture.colorSpace = THREE.SRGBColorSpace;
-    const planetMesh = new THREE.Mesh(
-      new THREE.SphereGeometry(28, 48, 48),
-      new THREE.MeshStandardMaterial({ map: planetTexture, roughness: 0.85, metalness: 0.1 })
-    );
-    planetGroup.add(planetMesh);
-    planetMeshRef.current = planetGroup;
-
-    // 12. Superfície de Terreno para Pouso Real (Malha com Crateras e Plataforma de Aterragem)
-    const terrainGroup = new THREE.Group();
-    terrainGroup.position.set(0, -3.2, 0);
-    scene.add(terrainGroup);
-
-    const terrainGeo = new THREE.PlaneGeometry(90, 90, 36, 36);
-    const pos = terrainGeo.attributes.position;
-    for (let i = 0; i < pos.count; i++) {
-      const vx = pos.getX(i);
-      const vy = pos.getY(i);
-      const dist = Math.sqrt(vx * vx + vy * vy);
-      // Suavizar o centro (plataforma de pouso) e criar crateras em redor
-      const elevation = dist < 8 ? 0 : Math.sin(vx * 0.25) * Math.cos(vy * 0.25) * 1.8;
-      pos.setZ(i, elevation);
-    }
-    terrainGeo.computeVertexNormals();
-    const terrainMat = new THREE.MeshStandardMaterial({
-      color: missionConfig.universe === 'moon' ? 0x94a3b8 : missionConfig.universe === 'europa' ? 0x38bdf8 : 0x9a3412,
-      roughness: 0.9,
-      metalness: 0.05,
+    const starMat = new THREE.PointsMaterial({
+      size: 2.0,
+      vertexColors: true,
+      transparent: true,
+      opacity: 0.95,
     });
-    const terrainMesh = new THREE.Mesh(terrainGeo, terrainMat);
-    terrainMesh.rotation.x = -Math.PI / 2;
-    terrainGroup.add(terrainMesh);
+    const stars = new THREE.Points(starGeo, starMat);
+    scene.add(stars);
 
-    // Plataforma de Pouso com Anel de Neon
-    const padGeo = new THREE.RingGeometry(2.5, 3.2, 32);
-    const padMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8, side: THREE.DoubleSide });
-    const padMesh = new THREE.Mesh(padGeo, padMat);
-    padMesh.rotation.x = -Math.PI / 2;
-    padMesh.position.y = 0.05;
-    terrainGroup.add(padMesh);
+    // 6. Construção dos Ambientes Específicos para cada Missão
+    const isMoon = selectedMissionId === 'apollo11';
+    const isISS = selectedMissionId === 'iss_docking';
+    const isMars = selectedMissionId === 'mars2020';
+    const isEuropa = selectedMissionId === 'europa_clipper';
 
-    terrainGroup.visible = false;
-    surfaceTerrainRef.current = terrainGroup;
+    // A) TERRENO DO CORPO CELESTE (LUA / MARTE / EUROPA)
+    if (!isISS) {
+      let groundColor = 0x94a3b8; // Lua cinzenta
+      let groundRoughness = 0.95;
+      if (isMars) groundColor = 0xc2410c; // Marte avermelhado
+      if (isEuropa) { groundColor = 0x38bdf8; groundRoughness = 0.3; } // Europa gelo vítreo
 
-    // Redimensionamento responsivo
-    const handleResize = () => {
-      if (!container || !renderer || !camera) return;
-      camera.aspect = container.clientWidth / container.clientHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(container.clientWidth, container.clientHeight);
+      const terrainGeo = new THREE.PlaneGeometry(1600, 1600, 64, 64);
+      const posAttr = terrainGeo.attributes.position;
+      for (let i = 0; i < posAttr.count; i++) {
+        const vx = posAttr.getX(i);
+        const vy = posAttr.getY(i);
+        const dCenter = Math.sqrt(vx * vx + vy * vy);
+        let bump = Math.sin(vx * 0.02) * Math.cos(vy * 0.02) * 4.5;
+        if (dCenter < 80) bump *= 0.3; // Centro suave para zona de pouso
+        posAttr.setZ(i, bump);
+      }
+      terrainGeo.computeVertexNormals();
+
+      const terrainMat = new THREE.MeshStandardMaterial({
+        color: groundColor,
+        roughness: groundRoughness,
+        metalness: isEuropa ? 0.4 : 0.1,
+      });
+
+      const terrainMesh = new THREE.Mesh(terrainGeo, terrainMat);
+      terrainMesh.rotation.x = -Math.PI / 2;
+      terrainMesh.position.y = -20;
+      terrainMesh.receiveShadow = true;
+      scene.add(terrainMesh);
+
+      // Adicionar rochas procedurais espalhadas na superfície
+      const rockGeo = new THREE.DodecahedronGeometry(1.5, 1);
+      const rockMat = new THREE.MeshStandardMaterial({ color: isMars ? 0x9a3412 : 0x64748b, roughness: 0.9 });
+      for (let r = 0; r < 35; r++) {
+        const rock = new THREE.Mesh(rockGeo, rockMat);
+        rock.position.set((Math.random() - 0.5) * 300, -19.5, (Math.random() - 0.5) * 300);
+        rock.scale.set(0.5 + Math.random(), 0.5 + Math.random(), 0.5 + Math.random());
+        rock.castShadow = true;
+        scene.add(rock);
+      }
+    }
+
+    // B) ESTAÇÃO ESPACIAL INTERNACIONAL (ISS) EM 3D COMPLETO
+    if (isISS) {
+      const issGroup = new THREE.Group();
+
+      const centralLabGeo = new THREE.CylinderGeometry(2.4, 2.4, 18, 16);
+      const centralLabMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.85, roughness: 0.25 });
+      const centralLab = new THREE.Mesh(centralLabGeo, centralLabMat);
+      centralLab.rotation.z = Math.PI / 2;
+      issGroup.add(centralLab);
+
+      const crossLabGeo = new THREE.CylinderGeometry(2.2, 2.2, 14, 16);
+      const crossLab = new THREE.Mesh(crossLabGeo, centralLabMat);
+      issGroup.add(crossLab);
+
+      const trussGeo = new THREE.BoxGeometry(45, 0.8, 0.8);
+      const trussMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.7 });
+      const truss = new THREE.Mesh(trussGeo, trussMat);
+      truss.position.set(0, 3.5, 0);
+      issGroup.add(truss);
+
+      const solarPanelGeo = new THREE.BoxGeometry(10, 0.1, 4.5);
+      const solarPanelMat = new THREE.MeshStandardMaterial({ color: 0x1e3a8a, metalness: 0.6, roughness: 0.2 });
+      
+      [-18, -12, 12, 18].forEach((xPos) => {
+        const panelTop = new THREE.Mesh(solarPanelGeo, solarPanelMat);
+        panelTop.position.set(xPos, 5.5, 0);
+        issGroup.add(panelTop);
+
+        const panelBottom = new THREE.Mesh(solarPanelGeo, solarPanelMat);
+        panelBottom.position.set(xPos, 1.5, 0);
+        issGroup.add(panelBottom);
+      });
+
+      const ringGeo = new THREE.TorusGeometry(1.4, 0.2, 16, 32);
+      const ringMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8 });
+      const dockRing = new THREE.Mesh(ringGeo, ringMat);
+      dockRing.position.set(0, 0, 7.2);
+      issGroup.add(dockRing);
+
+      const beaconLight = new THREE.PointLight(0x38bdf8, 2, 35);
+      beaconLight.position.set(0, 0, 8);
+      issGroup.add(beaconLight);
+
+      const earthGlobeGeo = new THREE.SphereGeometry(180, 64, 64);
+      const earthGlobeMat = new THREE.MeshStandardMaterial({ color: 0x1d4ed8, roughness: 0.6 });
+      const earthGlobe = new THREE.Mesh(earthGlobeGeo, earthGlobeMat);
+      earthGlobe.position.set(0, -220, -100);
+      scene.add(earthGlobe);
+
+      issGroup.position.set(0, 10, -50);
+      scene.add(issGroup);
+      issStationRef.current = issGroup;
+    }
+
+    // C) PLANETA JÚPITER COM FAIXAS GASOSAS AO FUNDO (SE FOR EUROPA CLIPPER)
+    if (isEuropa) {
+      const jupiterGeo = new THREE.SphereGeometry(160, 64, 64);
+      const jupiterMat = new THREE.MeshStandardMaterial({ color: 0xd97706, roughness: 0.7 });
+      const jupiterMesh = new THREE.Mesh(jupiterGeo, jupiterMat);
+      jupiterMesh.position.set(220, 80, -400);
+      scene.add(jupiterMesh);
+    }
+
+    // 7. CONSTRUÇÃO DA NAVE DO JOGADOR CONFORME A MISSÃO
+    const playerGroup = new THREE.Group();
+    playerVehicleRef.current = playerGroup;
+
+    if (isMoon) {
+      // --- MÓDULO LUNAR APOLLO 11 (LM EAGLE) ---
+      const descentGeo = new THREE.CylinderGeometry(3.2, 3.8, 2.5, 8);
+      const descentMat = new THREE.MeshStandardMaterial({ color: 0xd97706, metalness: 0.9, roughness: 0.3 });
+      const descentStage = new THREE.Mesh(descentGeo, descentMat);
+      descentStage.castShadow = true;
+      playerGroup.add(descentStage);
+
+      const ascentGeo = new THREE.BoxGeometry(2.6, 2.4, 2.6);
+      const ascentMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.8, roughness: 0.3 });
+      const ascentStage = new THREE.Mesh(ascentGeo, ascentMat);
+      ascentStage.position.y = 2.2;
+      ascentStage.castShadow = true;
+      playerGroup.add(ascentStage);
+
+      const winGeo = new THREE.PlaneGeometry(0.6, 0.6);
+      const winMat = new THREE.MeshBasicMaterial({ color: 0x0284c7 });
+      const winLeft = new THREE.Mesh(winGeo, winMat);
+      winLeft.position.set(-0.6, 2.4, 1.31);
+      playerGroup.add(winLeft);
+      const winRight = new THREE.Mesh(winGeo, winMat);
+      winRight.position.set(0.6, 2.4, 1.31);
+      playerGroup.add(winRight);
+
+      const legMat = new THREE.MeshStandardMaterial({ color: 0x64748b, metalness: 0.8 });
+      const padMat = new THREE.MeshStandardMaterial({ color: 0xd97706, metalness: 0.9 });
+
+      [
+        { x: 3.2, z: 3.2, rotZ: -0.4, rotX: 0.4 },
+        { x: -3.2, z: 3.2, rotZ: 0.4, rotX: 0.4 },
+        { x: 3.2, z: -3.2, rotZ: -0.4, rotX: -0.4 },
+        { x: -3.2, z: -3.2, rotZ: 0.4, rotX: -0.4 },
+      ].forEach((legCfg) => {
+        const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 3.5), legMat);
+        leg.position.set(legCfg.x * 0.7, -1.2, legCfg.z * 0.7);
+        leg.rotation.z = legCfg.rotZ;
+        leg.rotation.x = legCfg.rotX;
+        leg.castShadow = true;
+        playerGroup.add(leg);
+
+        const pad = new THREE.Mesh(new THREE.CylinderGeometry(0.7, 0.7, 0.15, 12), padMat);
+        pad.position.set(legCfg.x * 1.05, -2.5, legCfg.z * 1.05);
+        playerGroup.add(pad);
+      });
+
+    } else if (isISS) {
+      // --- CÁPSULA TRIPULADA CREW DRAGON / ORION ---
+      const capsuleGeo = new THREE.ConeGeometry(2.4, 4.5, 16);
+      const capsuleMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, metalness: 0.7, roughness: 0.2 });
+      const capsule = new THREE.Mesh(capsuleGeo, capsuleMat);
+      capsule.rotation.x = -Math.PI / 2;
+      playerGroup.add(capsule);
+
+      const noseRingGeo = new THREE.TorusGeometry(0.9, 0.15, 12, 24);
+      const noseRingMat = new THREE.MeshStandardMaterial({ color: 0x0284c7, metalness: 0.9 });
+      const noseRing = new THREE.Mesh(noseRingGeo, noseRingMat);
+      noseRing.position.set(0, 0, -2.4);
+      playerGroup.add(noseRing);
+
+    } else if (isMars) {
+      // --- ROVER PERSEVERANCE & SKYCRANE ---
+      const roverBodyGeo = new THREE.BoxGeometry(3.0, 1.4, 4.2);
+      const roverBodyMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, metalness: 0.8, roughness: 0.3 });
+      const roverBody = new THREE.Mesh(roverBodyGeo, roverBodyMat);
+      roverBody.castShadow = true;
+      playerGroup.add(roverBody);
+
+      const mastGeo = new THREE.CylinderGeometry(0.12, 0.12, 2.5);
+      const mastMat = new THREE.MeshStandardMaterial({ color: 0x334155 });
+      const mast = new THREE.Mesh(mastGeo, mastMat);
+      mast.position.set(0.8, 1.6, -1.2);
+      playerGroup.add(mast);
+
+      const camHeadGeo = new THREE.BoxGeometry(0.8, 0.5, 0.6);
+      const camHeadMat = new THREE.MeshStandardMaterial({ color: 0x0284c7 });
+      const camHead = new THREE.Mesh(camHeadGeo, camHeadMat);
+      camHead.position.set(0.8, 2.8, -1.2);
+      playerGroup.add(camHead);
+
+      const wheelGeo = new THREE.CylinderGeometry(0.65, 0.65, 0.6, 16);
+      const wheelMat = new THREE.MeshStandardMaterial({ color: 0x475569, metalness: 0.9, roughness: 0.4 });
+
+      [-1.8, 1.8].forEach((wx) => {
+        [-1.4, 0, 1.4].forEach((wz) => {
+          const wheel = new THREE.Mesh(wheelGeo, wheelMat);
+          wheel.rotation.z = Math.PI / 2;
+          wheel.position.set(wx, -0.9, wz);
+          wheel.castShadow = true;
+          playerGroup.add(wheel);
+        });
+      });
+
+      const rtgGeo = new THREE.CylinderGeometry(0.6, 0.6, 1.2, 12);
+      const rtgMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.8 });
+      const rtg = new THREE.Mesh(rtgGeo, rtgMat);
+      rtg.rotation.x = Math.PI / 2;
+      rtg.position.set(0, 0.5, 2.4);
+      playerGroup.add(rtg);
+
+      const droneGroup = new THREE.Group();
+      droneGroupRef.current = droneGroup;
+      const droneBodyGeo = new THREE.BoxGeometry(0.8, 0.8, 0.8);
+      const droneBodyMat = new THREE.MeshStandardMaterial({ color: 0xd97706 });
+      const droneBody = new THREE.Mesh(droneBodyGeo, droneBodyMat);
+      droneGroup.add(droneBody);
+
+      const bladeGeo = new THREE.BoxGeometry(2.4, 0.05, 0.2);
+      const bladeMat = new THREE.MeshBasicMaterial({ color: 0x000000 });
+      const blade1 = new THREE.Mesh(bladeGeo, bladeMat);
+      blade1.position.y = 0.6;
+      droneGroup.add(blade1);
+      const blade2 = new THREE.Mesh(bladeGeo, bladeMat);
+      blade2.position.y = 0.8;
+      droneGroup.add(blade2);
+
+      droneGroup.position.set(-3.5, -0.8, 0);
+      playerGroup.add(droneGroup);
+
+    } else {
+      // --- SONDA EUROPA CLIPPER ---
+      const clipperGeo = new THREE.BoxGeometry(2.8, 2.8, 3.2);
+      const clipperMat = new THREE.MeshStandardMaterial({ color: 0x0284c7, metalness: 0.85 });
+      const clipper = new THREE.Mesh(clipperGeo, clipperMat);
+      playerGroup.add(clipper);
+
+      const bigWingGeo = new THREE.BoxGeometry(14, 0.1, 2.5);
+      const bigWingMat = new THREE.MeshStandardMaterial({ color: 0x1e3a8a, metalness: 0.7 });
+      const leftWing = new THREE.Mesh(bigWingGeo, bigWingMat);
+      leftWing.position.set(-8.5, 0, 0);
+      playerGroup.add(leftWing);
+      const rightWing = new THREE.Mesh(bigWingGeo, bigWingMat);
+      rightWing.position.set(8.5, 0, 0);
+      playerGroup.add(rightWing);
+
+      const dishGeo = new THREE.SphereGeometry(2.2, 16, 8, 0, Math.PI * 2, 0, Math.PI / 2.8);
+      const dishMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, metalness: 0.8, side: THREE.DoubleSide });
+      const dish = new THREE.Mesh(dishGeo, dishMat);
+      dish.position.set(0, 1.8, -1.8);
+      dish.rotation.x = Math.PI / 3;
+      playerGroup.add(dish);
+    }
+
+    // Pluma de Propulsão Incandescente (Fogo do Foguetão)
+    const plumeGeo = new THREE.ConeGeometry(1.2, 5.0, 16);
+    const plumeMat = new THREE.MeshBasicMaterial({
+      color: 0x38bdf8,
+      transparent: true,
+      opacity: 0.0,
+    });
+    const plume = new THREE.Mesh(plumeGeo, plumeMat);
+    plume.position.y = -3.8;
+    plume.rotation.x = Math.PI;
+    playerGroup.add(plume);
+    enginePlumeRef.current = plume;
+
+    // Posicionamento inicial da nave no espaço
+    playerGroup.position.copy(positionRef.current);
+    scene.add(playerGroup);
+
+    // 8. CONTROLOS DE TECLADO INTERATIVOS (WASD, Setas, Espaço, R, F, C, H)
+    const keyState = {};
+
+    const onKeyDown = (e) => {
+      keyState[e.code] = true;
+
+      if (e.code === 'KeyW' || e.code === 'ArrowUp') {
+        isThrustingRef.current = true;
+        playSound('thrust', soundEnabled);
+      }
+      if (e.code === 'KeyS' || e.code === 'ArrowDown') {
+        isBrakingRef.current = true;
+        playSound('rcs', soundEnabled);
+      }
+      if (e.code === 'KeyA' || e.code === 'ArrowLeft') {
+        isRCSLeftRef.current = true;
+        playSound('rcs', soundEnabled);
+      }
+      if (e.code === 'KeyD' || e.code === 'ArrowRight') {
+        isRCSRightRef.current = true;
+        playSound('rcs', soundEnabled);
+      }
+      if (e.code === 'Space') {
+        isThrustingRef.current = true;
+        playSound('launch', soundEnabled);
+      }
+      if (e.code === 'KeyC') {
+        setCameraMode((prev) => (prev === 'chase' ? 'cockpit' : prev === 'cockpit' ? 'orbit' : 'chase'));
+        playSound('click', soundEnabled);
+      }
+      if (e.code === 'KeyR') {
+        triggerScienceScan();
+      }
     };
-    window.addEventListener('resize', handleResize);
 
-    // Loop de Animação e Física em Tempo Real
-    const clock = new THREE.Clock();
-    let animId;
+    const onKeyUp = (e) => {
+      keyState[e.code] = false;
+      if (e.code === 'KeyW' || e.code === 'ArrowUp' || e.code === 'Space') {
+        isThrustingRef.current = false;
+      }
+      if (e.code === 'KeyS' || e.code === 'ArrowDown') {
+        isBrakingRef.current = false;
+      }
+      if (e.code === 'KeyA' || e.code === 'ArrowLeft') {
+        isRCSLeftRef.current = false;
+      }
+      if (e.code === 'KeyD' || e.code === 'ArrowRight') {
+        isRCSRightRef.current = false;
+      }
+    };
 
-    const animate = () => {
-      animId = requestAnimationFrame(animate);
-      const delta = clock.getDelta();
-      const elapsed = clock.getElapsedTime();
+    window.addEventListener('keydown', onKeyDown);
+    window.addEventListener('keyup', onKeyUp);
 
-      // Rotação dos corpos celestes
-      if (earthMeshRef.current) earthMeshRef.current.rotation.y += delta * 0.02;
-      if (planetMeshRef.current) planetMeshRef.current.rotation.y += delta * 0.03;
-      starField.rotation.y += delta * 0.001;
+    // 9. LOOP DE FÍSICA E ANIMAÇÃO DA SIMULAÇÃO (60 FPS)
+    let clock = new THREE.Clock();
 
-      // Animação de asteroides flutuantes
-      if (asteroidFieldRef.current && flightStage === 'cruise') {
-        asteroidFieldRef.current.children.forEach((ast, idx) => {
-          ast.rotation.x += delta * (0.1 + idx * 0.01);
-          ast.rotation.y += delta * 0.15;
-        });
+    const animateLoop = () => {
+      animFrameRef.current = requestAnimationFrame(animateLoop);
+      const delta = Math.min(clock.getDelta(), 0.1);
+      const time = clock.getElapsedTime();
+
+      stars.rotation.y += 0.0003;
+
+      if (issStationRef.current) {
+        issStationRef.current.rotation.y += 0.001;
       }
 
-      // Rotação e órbita das outras naves
-      if (otherVesselsGroupRef.current) {
-        gingaGroup.position.x = 12 + Math.sin(elapsed * 0.5) * 2;
-        gingaGroup.position.z = -14 + Math.cos(elapsed * 0.5) * 2;
-        voyagerGroup.rotation.y += delta * 0.1;
-        jwstGroup.rotation.x += delta * 0.05;
+      // FÍSICA DE VOO DA NAVE
+      const pos = positionRef.current;
+      const vel = velocityRef.current;
+      const rot = rotationRef.current;
+
+      // Controlo de Guinada e Rotação
+      if (isRCSLeftRef.current) {
+        rot.y += 1.8 * delta;
+        rot.z = Math.min(0.35, rot.z + 0.08);
+      } else if (isRCSRightRef.current) {
+        rot.y -= 1.8 * delta;
+        rot.z = Math.max(-0.35, rot.z - 0.08);
+      } else if (sasEnabled) {
+        // SAS (Stability Augmentation System) ativo: estabiliza a rotação automaticamente
+        rot.z *= 0.90;
       }
 
-      // Dinâmica de Voo e Movimentação da Nave do Jogador
-      if (spacecraftGroupRef.current) {
-        const ship = spacecraftGroupRef.current;
+      if (keyState['KeyQ']) rot.x -= 1.4 * delta;
+      if (keyState['KeyE']) rot.x += 1.4 * delta;
 
-        if (flightStage === 'land') {
-          // No nível de pouso, a nave desce em direção à superfície sob gravidade
-          if (ship.position.y > -2.2) {
-            const grav = 1.2;
-            const thrustUp = isThrusting ? 2.4 : 0;
-            const netY = thrustUp - grav;
-            ship.position.y += netY * delta;
-            setVerticalSpeed(Math.max(0, +(grav * 2.5 - thrustUp * 1.5).toFixed(1)));
-            setAltitudeKm((alt) => Math.max(0, +(alt - delta * 40).toFixed(0)));
+      // Gravidade Planetária Realista
+      const g = currentMission.gravity * 0.15;
+      if (!isISS) {
+        vel.y -= g * delta;
+      }
+
+      // Auto-Hover / Auxílio de Pouso Suave Automático
+      let effectiveThrust = isThrustingRef.current;
+      if (autoHoverEnabled && !isISS && pos.y < 0) {
+        // Se a velocidade vertical for mais rápida que -1.8 m/s, aplica empuxo suave
+        if (vel.y < -0.4) {
+          effectiveThrust = true;
+        }
+      }
+
+      // Propulsão do Foguete
+      if (effectiveThrust && fuelPercentage > 0) {
+        const thrustForce = 8.5;
+        const forward = new THREE.Vector3(0, 1, 0).applyEuler(rot);
+        vel.addScaledVector(forward, thrustForce * delta);
+
+        if (enginePlumeRef.current) {
+          enginePlumeRef.current.material.opacity = 0.9 + Math.sin(time * 40) * 0.1;
+        }
+
+        setFuelPercentage((prev) => Math.max(0, prev - 0.08));
+      } else if (isBrakingRef.current && fuelPercentage > 0) {
+        vel.multiplyScalar(0.96);
+        if (enginePlumeRef.current) enginePlumeRef.current.material.opacity = 0.2;
+        setFuelPercentage((prev) => Math.max(0, prev - 0.04));
+      } else {
+        if (enginePlumeRef.current) enginePlumeRef.current.material.opacity = 0.0;
+      }
+
+      // Atualizar posição com a velocidade calculada
+      pos.addScaledVector(vel, delta);
+      playerGroup.position.copy(pos);
+      playerGroup.rotation.copy(rot);
+
+      // Calcular telemetria para o HUD
+      const alt = Math.max(0, Math.round((pos.y + 18) * 25));
+      setCurrentAltitude(alt);
+      const vSpd = parseFloat((vel.y * 5).toFixed(1));
+      setVerticalVelocity(vSpd);
+      const hSpd = parseFloat((Math.sqrt(vel.x * vel.x + vel.z * vel.z) * 10).toFixed(1));
+      setHorizontalSpeed(hSpd);
+
+      // TESTE DE POUSO NA SUPERFÍCIE (LUA / MARTE / EUROPA)
+      if (!isISS && pos.y <= -17.8) {
+        pos.y = -17.8;
+        vel.set(0, 0, 0);
+
+        if (!touchdownOccurred) {
+          setTouchdownOccurred(true);
+          if (Math.abs(vSpd) <= 3.2 && hSpd <= 5.0) {
+            setTouchdownSuccess(true);
+            playSound('touchdown', soundEnabled);
+            markObjectiveComplete(currentMission.objectives[1]?.id || 'touchdown', 100, 'Pouso Suave Confirmado!');
+            setRadioTransmission(currentMission.radioQuote);
           } else {
-            // Toque no solo
-            if (!touchdownSuccess && !touchdownCrashed) {
-              if (verticalSpeed <= 4.0) {
-                setTouchdownSuccess(true);
-                playSound('touchdown', soundEnabled);
-                setCompletedObjectives((prev) => ({ ...prev, land: true }));
-              } else {
-                setTouchdownCrashed(true);
-                setShipHealth((h) => Math.max(0, h - 45));
-                playSound('warning', soundEnabled);
-              }
-            }
+            setTouchdownSuccess(false);
+            playSound('alarm', soundEnabled);
+            setHullIntegrity((prev) => Math.max(0, prev - 50));
           }
-        } else {
-          // Flutuação em órbita ou cruzeiro
-          ship.position.y = Math.sin(elapsed * 1.5) * 0.15;
-          if (!isThrusting && cameraMode === 'free') {
-            ship.rotation.y += delta * 0.08;
-          }
-        }
-
-        // Animação dos jatos de chama dos propulsores
-        thrusterPlumesRef.current.forEach((plume) => {
-          if (plume) {
-            plume.scale.set(
-              1 + Math.sin(elapsed * 28) * 0.35,
-              isThrusting ? (1.5 + Math.cos(elapsed * 32) * 0.8) : 0.01,
-              1 + Math.sin(elapsed * 28) * 0.35
-            );
-          }
-        });
-
-        // Efeito de Linhas de Hiperespaço
-        if (warpLinesRef.current) {
-          warpLinesRef.current.material.opacity = isWarping ? 0.8 : 0.0;
-          if (isWarping) {
-            warpLinesRef.current.rotation.z += delta * 2;
-          }
-        }
-
-        // Gestão de Câmara (Chase vs Cockpit vs Livre)
-        if (cameraMode === 'chase' && cameraRef.current) {
-          camera.position.x = ship.position.x;
-          camera.position.y = ship.position.y + 3.2;
-          camera.position.z = ship.position.z + 10;
-          controls.target.copy(ship.position);
-        } else if (cameraMode === 'cockpit' && cameraRef.current) {
-          camera.position.x = ship.position.x;
-          camera.position.y = ship.position.y + 0.9;
-          camera.position.z = ship.position.z - 0.2;
-          controls.target.set(ship.position.x, ship.position.y + 0.9, ship.position.z - 15);
         }
       }
 
-      controls.update();
+      // TESTE DE ACOPLAGEM NA ISS
+      if (isISS && issStationRef.current) {
+        const distToISS = pos.distanceTo(issStationRef.current.position);
+        if (distToISS < 15 && !dockingSuccess) {
+          if (Math.abs(vSpd) <= 1.2 && hSpd <= 2.0) {
+            setDockingSuccess(true);
+            playSound('dock', soundEnabled);
+            markObjectiveComplete('soft_dock', 120, 'Acoplagem na ISS com Sucesso!');
+            setRadioTransmission(currentMission.radioQuote);
+          }
+        }
+      }
+
+      // POSICIONAMENTO DA CÂMARA SEGUNDO O MODO
+      if (cameraMode === 'cockpit') {
+        const headOffset = new THREE.Vector3(0, 1.8, -1.2).applyEuler(rot);
+        camera.position.copy(pos).add(headOffset);
+        const lookDir = pos.clone().add(new THREE.Vector3(0, 0, -50).applyEuler(rot));
+        camera.lookAt(lookDir);
+      } else if (cameraMode === 'orbit') {
+        const camDist = 35;
+        camera.position.set(pos.x + Math.sin(time * 0.2) * camDist, pos.y + 12, pos.z + Math.cos(time * 0.2) * camDist);
+        camera.lookAt(pos);
+      } else {
+        const chaseOffset = new THREE.Vector3(0, 8, 28).applyEuler(rot);
+        camera.position.copy(pos).add(chaseOffset);
+        camera.lookAt(pos.clone().add(new THREE.Vector3(0, 1.5, 0)));
+      }
+
       renderer.render(scene, camera);
     };
 
-    animate();
+    animateLoop();
+
+    // Redimensionamento responsivo
+    const handleResize = () => {
+      if (!container) return;
+      const nw = container.clientWidth;
+      const nh = container.clientHeight;
+      camera.aspect = nw / nh;
+      camera.updateProjectionMatrix();
+      renderer.setSize(nw, nh);
+    };
+    window.addEventListener('resize', handleResize);
 
     return () => {
+      cancelAnimationFrame(animFrameRef.current);
+      window.removeEventListener('keydown', onKeyDown);
+      window.removeEventListener('keyup', onKeyUp);
       window.removeEventListener('resize', handleResize);
-      cancelAnimationFrame(animId);
-      controls.dispose();
       renderer.dispose();
-      if (container && renderer.domElement) container.removeChild(renderer.domElement);
     };
-  }, [missionConfig.universe]);
+  }, [selectedMissionId, soundEnabled, markObjectiveComplete, currentMission, sasEnabled, autoHoverEnabled]);
 
-  // ==========================================================================
-  // CONSTRUÇÃO PROCEDURAL DA NAVE / ROVER / LANDER
-  // ==========================================================================
-  const buildSpacecraftModel = useCallback(() => {
-    const group = spacecraftGroupRef.current;
-    if (!group) return;
-
-    while (group.children.length > 0) group.remove(group.children[0]);
-    thrusterPlumesRef.current = [];
-    rcsPuffsRef.current = [];
-
-    const isRover = missionConfig.type === 'rover';
-    const isLander = missionConfig.type === 'lander';
-    const dishDiameter = missionConfig.comms.antenna === 'high' ? 2.4 : missionConfig.comms.antenna === 'medium' ? 1.4 : 0.6;
-    const panelAreaM2 = missionConfig.power.panelArea || 5;
-
-    const goldFoilMat = new THREE.MeshStandardMaterial({ color: 0xd97706, roughness: 0.25, metalness: 0.9 });
-    const darkMetalMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.45, metalness: 0.7 });
-    const solarCellMat = new THREE.MeshStandardMaterial({ color: 0x0284c7, roughness: 0.15, metalness: 0.92 });
-    const chromeMat = new THREE.MeshStandardMaterial({ color: 0xf1f5f9, roughness: 0.1, metalness: 0.95 });
-
-    if (isRover) {
-      // Chassi Robótico do Rover
-      const chassis = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.7, 1.6), goldFoilMat);
-      group.add(chassis);
-      // 6 Rodas Articuladas
-      const wheelGeo = new THREE.CylinderGeometry(0.35, 0.35, 0.25, 16);
-      [
-        [1.0, -0.6, 1.1], [0, -0.6, 1.2], [-1.0, -0.6, 1.1],
-        [1.0, -0.6, -1.1], [0, -0.6, -1.2], [-1.0, -0.6, -1.1],
-      ].forEach((p) => {
-        const w = new THREE.Mesh(wheelGeo, darkMetalMat);
-        w.rotation.x = Math.PI / 2;
-        w.position.set(...p);
-        group.add(w);
-      });
-      // Mastro de câmara estereoscópica
-      const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 1.5, 12), chromeMat);
-      mast.position.set(0.8, 1.0, 0);
-      group.add(mast);
-      const head = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.25, 0.5), darkMetalMat);
-      head.position.set(0.8, 1.75, 0);
-      group.add(head);
-    } else if (isLander) {
-      // Corpo Octogonal do Módulo de Pouso (Lander)
-      const landerBus = new THREE.Mesh(new THREE.CylinderGeometry(1.4, 1.6, 1.2, 8), goldFoilMat);
-      group.add(landerBus);
-      // 4 Pernas Articuladas de Aterragem
-      for (let i = 0; i < 4; i++) {
-        const angle = (i * Math.PI) / 2;
-        const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 1.6), chromeMat);
-        leg.rotation.z = 0.55;
-        leg.rotation.y = angle;
-        leg.position.set(Math.cos(angle) * 1.5, -0.8, Math.sin(angle) * 1.5);
-        group.add(leg);
-      }
-      // Motor de descida
-      const descentEngine = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.5, 0.6, 16), darkMetalMat);
-      descentEngine.position.set(0, -0.8, 0);
-      group.add(descentEngine);
-      const plume = new THREE.Mesh(
-        new THREE.ConeGeometry(0.3, 1.6, 16),
-        new THREE.MeshBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: isThrusting ? 0.9 : 0.0 })
-      );
-      plume.rotation.x = Math.PI;
-      plume.position.set(0, -1.6, 0);
-      group.add(plume);
-      thrusterPlumesRef.current.push(plume);
-    } else {
-      // Sonda Orbital (Orbiter)
-      const bus = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.2, 2.0, 6), goldFoilMat);
-      group.add(bus);
-
-      // Asas de Painéis Solares
-      const wingLength = 1.6 + panelAreaM2 * 0.35;
-      const wingGeo = new THREE.BoxGeometry(wingLength, 0.05, 0.95);
-      const lWing = new THREE.Mesh(wingGeo, solarCellMat);
-      lWing.position.set(-1.2 - wingLength / 2, 0, 0);
-      group.add(lWing);
-
-      const rWing = new THREE.Mesh(wingGeo, solarCellMat);
-      rWing.position.set(1.2 + wingLength / 2, 0, 0);
-      group.add(rWing);
-
-      // Antena Parabólica de Alto Ganho com sub-refletor
-      const dishGeo = new THREE.SphereGeometry(dishDiameter * 0.55, 24, 12, 0, Math.PI * 2, 0, Math.PI / 2.2);
-      const dish = new THREE.Mesh(dishGeo, chromeMat);
-      dish.rotation.x = -Math.PI / 2;
-      dish.position.set(0, 1.25, 0.4);
-      group.add(dish);
-
-      // Bico do Motor Principal
-      const engine = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.6, 0.9, 16, 1, true), darkMetalMat);
-      engine.position.set(0, -1.4, 0);
-      group.add(engine);
-
-      // Labareda de Propulsão Interativa
-      const plume = new THREE.Mesh(
-        new THREE.ConeGeometry(0.35, 1.8, 16),
-        new THREE.MeshBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: isThrusting ? 0.9 : 0.0 })
-      );
-      plume.rotation.x = Math.PI;
-      plume.position.set(0, -2.3, 0);
-      group.add(plume);
-      thrusterPlumesRef.current.push(plume);
-    }
-  }, [missionConfig, isThrusting]);
-
-  useEffect(() => {
-    buildSpacecraftModel();
-  }, [buildSpacecraftModel]);
-
-  // Alternar a visibilidade de corpos celestes conforme o nível selecionado
-  useEffect(() => {
-    if (earthMeshRef.current) earthMeshRef.current.visible = flightStage === 'earth';
-    if (planetMeshRef.current) planetMeshRef.current.visible = flightStage === 'orbit' || flightStage === 'land';
-    if (otherVesselsGroupRef.current) otherVesselsGroupRef.current.visible = flightStage === 'cruise';
-    if (asteroidFieldRef.current) asteroidFieldRef.current.visible = flightStage === 'cruise';
-    if (surfaceTerrainRef.current) surfaceTerrainRef.current.visible = flightStage === 'land';
-
-    if (flightStage === 'cruise') {
-      setActiveEncounter(fleetVessels[0]);
-    } else {
-      setActiveEncounter(null);
-      setEncounterMessage(null);
-    }
-  }, [flightStage]);
-
-  // ==========================================================================
-  // CONTROLOS DE PILOTAGEM DA NAVE
-  // ==========================================================================
-
-  // Aceleração / Impulso Principal
-  const triggerThrust = useCallback(() => {
-    if (propellantRemaining <= 0) return;
-    playSound('thrust', soundEnabled);
-    setIsThrusting(true);
-    setPropellantRemaining((p) => Math.max(0, p - 30));
-    setBatteryLevel((b) => Math.max(10, b - 1));
-    setVelocityKmS((v) => +(v + 0.22).toFixed(2));
-    setAltitudeKm((a) => a + 15);
-
-    if (flightStage === 'earth' && velocityKmS >= 7.8) {
-      setCompletedObjectives((prev) => ({ ...prev, earth: true }));
-    }
-
-    setTimeout(() => {
-      setIsThrusting(false);
-    }, 600);
-  }, [propellantRemaining, soundEnabled, flightStage, velocityKmS]);
-
-  // Retro-Queima / Frenagem
-  const triggerRetro = useCallback(() => {
-    if (propellantRemaining <= 0) return;
-    playSound('warning', soundEnabled);
-    setIsThrusting(true);
-    setPropellantRemaining((p) => Math.max(0, p - 20));
-    setVelocityKmS((v) => Math.max(1.0, +(v - 0.35).toFixed(2)));
-
-    if (flightStage === 'orbit') {
-      setCompletedObjectives((prev) => ({ ...prev, orbit: true }));
-    }
-
-    setTimeout(() => {
-      setIsThrusting(false);
-    }, 500);
-  }, [propellantRemaining, soundEnabled, flightStage]);
-
-  // Queima Máxima / Salto de Warp (Hiperespaço)
-  const triggerWarp = useCallback(() => {
-    if (propellantRemaining <= 100) return;
-    playSound('warp', soundEnabled);
-    setIsWarping(true);
-    setIsThrusting(true);
-    setPropellantRemaining((p) => Math.max(0, p - 80));
-    setVelocityKmS((v) => +(v + 2.4).toFixed(2));
-
-    setTimeout(() => {
-      setIsWarping(false);
-      setIsThrusting(false);
-    }, 1200);
-  }, [propellantRemaining, soundEnabled]);
-
-  // Rotação de Atitude (Guinada para Esquerda / Direita)
-  const rotateShip = useCallback((dir) => {
-    if (!spacecraftGroupRef.current) return;
-    playSound('click', soundEnabled);
-    spacecraftGroupRef.current.rotation.y += dir * 0.15;
-  }, [soundEnabled]);
-
-  // Arfagem (Inclinação do Nariz para Cima / Baixo)
-  const pitchShip = useCallback((dir) => {
-    if (!spacecraftGroupRef.current) return;
-    playSound('click', soundEnabled);
-    spacecraftGroupRef.current.rotation.x += dir * 0.15;
-  }, [soundEnabled]);
-
-  // Varrimento com Scanner Científico
-  const triggerScienceScan = useCallback(() => {
+  // Ação: Disparar Scanner Científico
+  const triggerScienceScan = () => {
     playSound('scanner', soundEnabled);
-    const pts = 30;
-    setCollectedScience((s) => s + pts);
-    if (onScienceBonus) onScienceBonus(pts);
-  }, [soundEnabled, onScienceBonus]);
-
-  // Comunicação de Rádio com Outra Nave da Frota
-  const handleHailProbe = () => {
-    if (!activeEncounter) return;
-    playSound('radio', soundEnabled);
-    const msg = activeEncounter.msg[lang] || activeEncounter.msg.pt;
-    setEncounterMessage(msg);
-    setHailCompleted(true);
-    setCollectedScience((s) => s + activeEncounter.pts);
-    setCompletedObjectives((prev) => ({ ...prev, cruise: true }));
-    if (onScienceBonus) onScienceBonus(activeEncounter.pts);
+    markObjectiveComplete(currentMission.objectives[0]?.id || 'scan', 50, 'Escaneamento Espectroscópico Completo');
   };
 
-  // Coletar Amostra de Solo no Pouso
-  const handleTakeSample = () => {
-    playSound('success', soundEnabled);
-    setSampleCollected(true);
-    setCollectedScience((s) => s + 50);
-    if (onScienceBonus) onScienceBonus(50);
-    confetti({ particleCount: 50, spread: 60, origin: { y: 0.7 } });
-  };
-
-  // Cravar Bandeira no Planeta
+  // Ação: Cravar Bandeira
   const handlePlantFlag = () => {
-    playSound('touchdown', soundEnabled);
+    playSound('click', soundEnabled);
     setFlagPlanted(true);
-    setCollectedScience((s) => s + 60);
-    if (onScienceBonus) onScienceBonus(60);
-    confetti({ particleCount: 90, spread: 90, origin: { y: 0.6 } });
+    markObjectiveComplete('flag', 75, 'Bandeira Cravada na Superfície');
   };
 
-  // Comandos de Teclado (WASD, Setas, Espaço, Q, E, R, F, C)
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (e.key === 'w' || e.key === 'W' || e.key === 'ArrowUp') {
-        e.preventDefault();
-        triggerThrust();
-      } else if (e.key === 's' || e.key === 'S' || e.key === 'ArrowDown') {
-        e.preventDefault();
-        triggerRetro();
-      } else if (e.key === 'a' || e.key === 'A' || e.key === 'ArrowLeft') {
-        e.preventDefault();
-        rotateShip(-1);
-      } else if (e.key === 'd' || e.key === 'D' || e.key === 'ArrowRight') {
-        e.preventDefault();
-        rotateShip(1);
-      } else if (e.key === 'q' || e.key === 'Q') {
-        e.preventDefault();
-        pitchShip(-1);
-      } else if (e.key === 'e' || e.key === 'E') {
-        e.preventDefault();
-        pitchShip(1);
-      } else if (e.key === ' ') {
-        e.preventDefault();
-        triggerWarp();
-      } else if (e.key === 'r' || e.key === 'R') {
-        triggerScienceScan();
-      } else if (e.key === 'c' || e.key === 'C') {
-        setCameraMode((m) => m === 'chase' ? 'cockpit' : m === 'cockpit' ? 'free' : 'chase');
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [triggerThrust, triggerRetro, triggerWarp, rotateShip, pitchShip, triggerScienceScan]);
+  // Ação: Recolher Amostra de Solo / Rocha
+  const handleCollectSample = () => {
+    playSound('scanner', soundEnabled);
+    setSampleCollected(true);
+    markObjectiveComplete('regolith', 80, 'Amostra de Regolito Guardada');
+    markObjectiveComplete('drill_rock', 90, 'Núcleo de Rocha Sedimentar Selado');
+  };
+
+  // Ação: Conduzir Rover
+  const handleDriveRover = () => {
+    playSound('rover', soundEnabled);
+    setPlayerControlMode('rover');
+    markObjectiveComplete('drive_rover', 60, 'Sistemas do Rover Perseverance Ativos');
+  };
+
+  // Ação: Descolar Ingenuity
+  const handleFlyIngenuity = () => {
+    playSound('thrust', soundEnabled);
+    setPlayerControlMode('drone');
+    markObjectiveComplete('fly_ingenuity', 120, 'Primeiro Voo Motorizado do Ingenuity');
+  };
+
+  // Controlo táctil de impulso (para jogadores sem teclado ou no rato)
+  const handleTouchThrustStart = () => {
+    isThrustingRef.current = true;
+    playSound('thrust', soundEnabled);
+  };
+  const handleTouchThrustEnd = () => {
+    isThrustingRef.current = false;
+  };
 
   return (
-    <div className="relative w-full h-[640px] sm:h-[700px] rounded-3xl overflow-hidden border border-cyan-500/40 bg-slate-950 shadow-[0_0_60px_rgba(56,189,248,0.25)] select-none">
+    <div className="space-y-6 text-left">
       
-      {/* 1. Canvas Three.js WebGL */}
-      <div ref={mountRef} className="w-full h-full cursor-grab active:cursor-grabbing" />
+      {/* SELETOR DE MISSÕES REAIS DA NASA (VISUAL, DIRETO E DIVERTIDO) */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        {nasaGameMissions.map((mission) => {
+          const isSelected = mission.id === selectedMissionId;
+          return (
+            <button
+              key={mission.id}
+              onClick={() => handleSelectMission(mission.id)}
+              className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer relative overflow-hidden group ${
+                isSelected
+                  ? 'bg-gradient-to-br from-cyan-500/25 via-blue-600/20 to-slate-900 border-cyan-400 shadow-[0_0_25px_rgba(56,189,248,0.3)] scale-[1.02]'
+                  : 'bg-slate-900/70 border-slate-800 hover:border-slate-700 hover:bg-slate-900'
+              }`}
+            >
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-950 border border-slate-800 text-cyan-300">
+                  {mission.badge.split('•')[0]}
+                </span>
+                {isSelected && <span className="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-ping" />}
+              </div>
 
-      {/* 2. HUD SUPERIOR: SELETOR DE NÍVEIS + CÂMARAS + VITAIS */}
-      <div className="absolute top-4 left-4 right-4 flex flex-wrap items-center justify-between gap-3 pointer-events-none">
+              <h4 className="font-bold text-xs sm:text-sm font-mono text-white group-hover:text-cyan-300 transition-colors line-clamp-1">
+                {mission.shortName}
+              </h4>
+
+              <p className="text-[11px] text-slate-400 mt-1 line-clamp-2 leading-relaxed">
+                {mission.tagline}
+              </p>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* ÁREA PRINCIPAL DA SIMULAÇÃO 3D */}
+      <div className="relative w-full h-[620px] rounded-3xl overflow-hidden border-2 border-cyan-500/40 bg-slate-950 shadow-2xl select-none">
         
-        {/* Seletor dos 4 Níveis de Voo Espacial */}
-        <div className="pointer-events-auto flex items-center gap-1.5 p-1.5 rounded-2xl bg-slate-900/90 border border-cyan-500/30 backdrop-blur-md shadow-2xl font-mono text-xs">
-          <button
-            onClick={() => { setFlightStage('earth'); playSound('click', soundEnabled); }}
-            className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer ${
-              flightStage === 'earth' ? 'bg-cyan-500 text-slate-950 font-bold' : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            {t('game_mode_earth')}
-          </button>
-          <button
-            onClick={() => { setFlightStage('cruise'); playSound('click', soundEnabled); }}
-            className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer ${
-              flightStage === 'cruise' ? 'bg-cyan-500 text-slate-950 font-bold' : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            {t('game_mode_cruise')}
-          </button>
-          <button
-            onClick={() => { setFlightStage('orbit'); playSound('click', soundEnabled); }}
-            className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer ${
-              flightStage === 'orbit' ? 'bg-cyan-500 text-slate-950 font-bold' : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            {t('game_mode_orbit')}
-          </button>
-          <button
-            onClick={() => { setFlightStage('land'); playSound('click', soundEnabled); }}
-            className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer ${
-              flightStage === 'land' ? 'bg-amber-500 text-slate-950 font-bold' : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            {t('game_mode_land')}
-          </button>
-        </div>
+        {/* Canvas WebGL do Three.js */}
+        <div ref={mountRef} className="w-full h-full cursor-grab active:cursor-grabbing" />
 
-        {/* Alternador de Câmaras (Chase / Cockpit / Livre) */}
-        <div className="pointer-events-auto flex items-center gap-1 p-1 rounded-xl bg-slate-900/90 border border-slate-800 text-[11px] font-mono backdrop-blur-md">
-          <button
-            onClick={() => { setCameraMode('chase'); playSound('click', soundEnabled); }}
-            className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
-              cameraMode === 'chase' ? 'bg-cyan-500 text-slate-950 font-bold' : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            {t('game_camera_chase')}
-          </button>
-          <button
-            onClick={() => { setCameraMode('cockpit'); playSound('click', soundEnabled); }}
-            className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
-              cameraMode === 'cockpit' ? 'bg-cyan-500 text-slate-950 font-bold' : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            {t('game_camera_cockpit')}
-          </button>
-          <button
-            onClick={() => { setCameraMode('free'); playSound('click', soundEnabled); }}
-            className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
-              cameraMode === 'free' ? 'bg-cyan-500 text-slate-950 font-bold' : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            {t('game_camera_orbit')}
-          </button>
-        </div>
-
-        {/* Indicadores Vitais da Nave: Vida, Combustível, Pontos de Ciência */}
-        <div className="pointer-events-auto flex items-center gap-2 p-2 rounded-2xl bg-slate-900/90 border border-slate-800 backdrop-blur-md text-xs font-mono shadow-2xl">
-          <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-rose-950/70 text-rose-300 border border-rose-500/30">
-            <Heart className="w-3.5 h-3.5 fill-rose-500 text-rose-500" />
-            <span>{t('game_ship_hull')} {shipHealth}%</span>
-          </div>
-
-          <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-cyan-950/70 text-cyan-300 border border-cyan-500/30">
-            <Flame className="w-3.5 h-3.5 text-cyan-400" />
-            <span>{t('game_propellant')} {propellantRemaining} m/s</span>
-          </div>
-
-          <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-amber-950/70 text-amber-300 border border-amber-500/30">
-            <Zap className="w-3.5 h-3.5 text-amber-400" />
-            <span>{t('game_battery_level')} {batteryLevel}%</span>
-          </div>
-
-          <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-purple-950/70 text-purple-300 border border-purple-500/30">
-            <Sparkles className="w-3.5 h-3.5 text-purple-400" />
-            <span>+{collectedScience} pts</span>
-          </div>
-        </div>
-
-      </div>
-
-      {/* 3. COCKPIT HUD OVERLAY (VISOR EM 1ª PESSOA) */}
-      {cameraMode === 'cockpit' && (
-        <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
-          {/* Mira reticular central de navegação */}
-          <div className="relative w-48 h-48 border border-cyan-400/20 rounded-full flex items-center justify-center">
-            <Crosshair className="w-8 h-8 text-cyan-400/70 animate-pulse" />
-            <div className="absolute top-2 text-[10px] font-mono text-cyan-300">VEL: {velocityKmS} km/s</div>
-            <div className="absolute bottom-2 text-[10px] font-mono text-cyan-300">ALT: {altitudeKm} km</div>
-            <div className="absolute left-2 text-[9px] font-mono text-slate-400">PITCH 0°</div>
-            <div className="absolute right-2 text-[9px] font-mono text-slate-400">YAW 180°</div>
-          </div>
-        </div>
-      )}
-
-      {/* 4. PAINEL DE OBJETIVOS ATIVOS DA MISSÃO */}
-      <div className="absolute top-20 right-4 max-w-xs p-3.5 rounded-2xl bg-slate-900/90 border border-cyan-500/30 shadow-xl backdrop-blur-md text-left font-mono text-xs pointer-events-auto">
-        <div className="text-[10px] uppercase text-cyan-400 font-bold mb-2 flex items-center gap-1.5">
-          <Award className="w-3.5 h-3.5" />
-          <span>{t('game_level_objectives_title')}</span>
-        </div>
-        <div className="space-y-1.5 text-[11px] text-slate-300">
-          <div className={`flex items-start gap-1.5 ${completedObjectives.earth ? 'text-emerald-400 line-through' : ''}`}>
-            <span>{completedObjectives.earth ? '✓' : '○'}</span>
-            <span>{t('obj_earth_orbit')}</span>
-          </div>
-          <div className={`flex items-start gap-1.5 ${completedObjectives.cruise ? 'text-emerald-400 line-through' : ''}`}>
-            <span>{completedObjectives.cruise ? '✓' : '○'}</span>
-            <span>{t('obj_deep_space_contact')}</span>
-          </div>
-          <div className={`flex items-start gap-1.5 ${completedObjectives.orbit ? 'text-emerald-400 line-through' : ''}`}>
-            <span>{completedObjectives.orbit ? '✓' : '○'}</span>
-            <span>{t('obj_planetary_insertion')}</span>
-          </div>
-          <div className={`flex items-start gap-1.5 ${completedObjectives.land ? 'text-emerald-400 line-through' : ''}`}>
-            <span>{completedObjectives.land ? '✓' : '○'}</span>
-            <span>{t('obj_surface_landing')}</span>
-          </div>
-        </div>
-      </div>
-
-      {/* 5. DIÁLOGO DO RADAR DE ENCONTRO NO ESPAÇO PROFUNDO */}
-      {flightStage === 'cruise' && activeEncounter && (
-        <div className="absolute top-20 left-4 max-w-sm p-4 rounded-2xl bg-slate-900/95 border border-cyan-400/40 shadow-2xl backdrop-blur-md space-y-2.5 text-left font-mono text-xs pointer-events-auto">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-cyan-400 font-bold">
-              <Radio className="w-4 h-4 animate-pulse" />
-              <span>{t('game_radar_vessels')}</span>
+        {/* NOTIFICAÇÃO ELEGANTE DE CONQUISTA NO TOPO DIREITO (SEM BLOQUEAR A TELA) */}
+        {badgeToast && (
+          <div className="absolute top-20 right-4 z-40 animate-in fade-in slide-in-from-top-4 duration-300 pointer-events-none">
+            <div className="p-3.5 rounded-2xl bg-slate-950/95 border-2 border-amber-400/80 shadow-[0_0_25px_rgba(251,191,36,0.35)] backdrop-blur-xl flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-amber-500/20 border border-amber-400/50 flex items-center justify-center text-amber-300 font-bold">
+                <Award className="w-5 h-5 text-amber-400" />
+              </div>
+              <div>
+                <div className="text-[10px] font-mono text-amber-400 font-bold uppercase tracking-wider">
+                  NASA Desafio Cumprido!
+                </div>
+                <div className="text-xs font-bold text-white font-mono">
+                  {badgeToast.title} <span className="text-cyan-400 ml-1">+{badgeToast.reward} pts</span>
+                </div>
+              </div>
             </div>
-            <span className="text-[10px] text-slate-400">{activeEncounter.dist}</span>
           </div>
+        )}
 
-          <div className="text-white font-semibold text-sm">
-            {activeEncounter.name}
-          </div>
-          <div className="text-[10px] text-slate-400">
-            Piloto: {activeEncounter.pilot}
-          </div>
-
-          <button
-            onClick={handleHailProbe}
-            className="w-full py-2 px-3 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md"
-          >
-            <MessageSquare className="w-3.5 h-3.5" />
-            <span>{hailCompleted ? '✓ ' + t('game_hail_probe') : t('game_hail_probe')}</span>
-          </button>
-
-          {encounterMessage && (
-            <div className="p-2.5 rounded-xl bg-cyan-950/80 border border-cyan-500/30 text-cyan-200 text-[11px] leading-relaxed">
-              {encounterMessage}
+        {/* CABEÇALHO SUPERIOR DO JOGO: SÍTIO DE POUSO, RELÓGIO MET & MODOS DE CÂMARA */}
+        <div className="absolute top-4 left-4 right-4 flex flex-wrap items-center justify-between gap-3 pointer-events-auto z-20">
+          
+          {/* Seletor de Sítios de Pouso Oficiais & Relógio MET da NASA */}
+          <div className="flex items-center gap-2 p-1.5 rounded-2xl bg-slate-950/85 border border-slate-800 backdrop-blur-md">
+            <div className="px-2.5 py-1 rounded-lg bg-cyan-950 border border-cyan-500/40 font-mono text-xs font-bold text-cyan-300">
+              {formatMET(metSeconds)}
             </div>
-          )}
-        </div>
-      )}
 
-      {/* 6. NOTIFICAÇÕES DE POUSO NA SUPERFÍCIE & AÇÕES */}
-      {flightStage === 'land' && touchdownSuccess && (
-        <div className="absolute top-20 left-1/2 -translate-x-1/2 p-4 rounded-2xl bg-slate-900/95 border-2 border-emerald-400 text-emerald-300 shadow-[0_0_40px_rgba(16,185,129,0.4)] backdrop-blur-md flex flex-col items-center gap-3 font-mono text-xs pointer-events-auto">
-          <div className="flex items-center gap-2 font-bold text-sm">
-            <CheckCircle2 className="w-5 h-5 text-emerald-400" />
-            <span>{t('game_touchdown_ready')}</span>
+            <span className="text-slate-700">|</span>
+
+            <Target className="w-3.5 h-3.5 text-cyan-400 ml-0.5" />
+            <span className="text-[11px] font-mono font-bold text-slate-300 mr-1 hidden sm:inline">Sítio:</span>
+            {currentMission.landingSites.map((site) => (
+              <button
+                key={site.id}
+                onClick={() => { playSound('click', soundEnabled); setSelectedSiteId(site.id); }}
+                className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer ${
+                  selectedSiteId === site.id
+                    ? 'bg-cyan-500 text-slate-950 shadow-md shadow-cyan-500/30'
+                    : 'text-slate-400 hover:text-white hover:bg-slate-900'
+                }`}
+              >
+                {site.name.split('(')[0]}
+              </button>
+            ))}
           </div>
 
+          {/* Ferramentas Vencedoras da NASA: Trajetória Hohmann & Caderneta de Voo */}
           <div className="flex items-center gap-2">
-            {!sampleCollected ? (
-              <button
-                onClick={handleTakeSample}
-                className="px-3 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold transition-all cursor-pointer"
-              >
-                {t('game_take_sample_btn')}
-              </button>
-            ) : (
-              <span className="text-purple-300 text-[11px]">✓ {t('game_sample_collected')}</span>
-            )}
+            <button
+              onClick={() => { playSound('click', soundEnabled); setIsTrajectoryModalOpen(true); }}
+              className="px-3 py-1.5 rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-slate-700 text-xs font-mono text-amber-300 flex items-center gap-1.5 backdrop-blur-md cursor-pointer transition-colors shadow-sm"
+            >
+              <Compass className="w-3.5 h-3.5 text-amber-400" />
+              <span>Órbita Hohmann</span>
+            </button>
 
-            {!flagPlanted ? (
-              <button
-                onClick={handlePlantFlag}
-                className="px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold transition-all cursor-pointer flex items-center gap-1.5"
-              >
-                <Flag className="w-3.5 h-3.5" />
-                <span>{t('game_plant_flag_btn')}</span>
-              </button>
-            ) : (
-              <span className="text-amber-300 text-[11px]">✓ {t('game_flag_planted')}</span>
-            )}
+            <button
+              onClick={() => { playSound('click', soundEnabled); setIsLogbookModalOpen(true); }}
+              className="px-3 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/50 text-xs font-mono font-bold text-amber-300 flex items-center gap-1.5 backdrop-blur-md cursor-pointer transition-colors"
+            >
+              <Award className="w-3.5 h-3.5 text-amber-400" />
+              <span>Medalhas ({completedObjectiveIds.length})</span>
+            </button>
+
+            <button
+              onClick={() => {
+                setCameraMode((prev) => (prev === 'chase' ? 'cockpit' : prev === 'cockpit' ? 'orbit' : 'chase'));
+                playSound('click', soundEnabled);
+              }}
+              className="px-3 py-1.5 rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-slate-700 text-xs font-mono text-cyan-300 flex items-center gap-1.5 backdrop-blur-md cursor-pointer transition-colors"
+            >
+              <Eye className="w-3.5 h-3.5 text-cyan-400" />
+              <span className="capitalize">{cameraMode} HUD</span>
+            </button>
           </div>
         </div>
-      )}
 
-      {flightStage === 'land' && touchdownCrashed && (
-        <div className="absolute top-20 left-1/2 -translate-x-1/2 px-6 py-3 rounded-2xl bg-rose-950/95 border-2 border-rose-500 text-rose-300 shadow-2xl backdrop-blur-md flex items-center gap-3 font-mono text-sm font-bold pointer-events-auto">
-          <AlertOctagon className="w-6 h-6 text-rose-500" />
-          <span>{t('game_touchdown_crash')}</span>
-        </div>
-      )}
+        {/* MIRA DO COCKPIT (MODO 1ª PESSOA COM HORIZONTE ARTIFICIAL) */}
+        {cameraMode === 'cockpit' && (
+          <div className="absolute inset-0 pointer-events-none flex items-center justify-center z-10">
+            <div className="w-56 h-56 border border-cyan-400/30 rounded-full flex items-center justify-center">
+              <div className="w-20 h-0.5 bg-cyan-400/80" />
+              <div className="w-0.5 h-20 bg-cyan-400/80" />
+              <div className="absolute font-mono text-[10px] text-cyan-300 -top-6">PITCH 0° • LEVEL</div>
+            </div>
+          </div>
+        )}
 
-      {/* 7. DOCK INFERIOR DE PILOTAGEM (TOUCH & BOTÕES) */}
-      <div className={`absolute bottom-4 left-1/2 -translate-x-1/2 w-[95%] max-w-4xl transition-transform duration-300 pointer-events-auto ${
-        isDockCollapsed ? 'translate-y-[calc(100%-36px)]' : 'translate-y-0'
-      }`}>
-        <div className="flex justify-center -mb-px">
+        {/* FEEDBACK DE RÁDIO CAPCOM DA NASA NO ECRÃ */}
+        {radioTransmission && (
+          <div className="absolute top-20 left-1/2 -translate-x-1/2 max-w-xl w-full px-4 z-30 pointer-events-auto">
+            <div className="p-4 rounded-2xl bg-slate-950/95 border-2 border-emerald-400/60 shadow-[0_0_30px_rgba(16,185,129,0.3)] backdrop-blur-xl text-left space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="font-mono text-xs font-bold text-emerald-400 flex items-center gap-2">
+                  <Radio className="w-4 h-4 text-emerald-400 animate-pulse" />
+                  <span>TRANSMISSÃO OFICIAL DA NASA (CAPCOM):</span>
+                </span>
+                <button
+                  onClick={() => setRadioTransmission(null)}
+                  className="text-xs text-slate-400 hover:text-white cursor-pointer font-mono"
+                >
+                  ✕ Fechar
+                </button>
+              </div>
+              <p className="text-sm font-bold text-white font-mono leading-relaxed">
+                "{radioTransmission}"
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* PAINEL DE POUSO BEM SUCEDIDO / ACOPLAGEM */}
+        {touchdownOccurred && (
+          <div className="absolute top-24 left-1/2 -translate-x-1/2 max-w-md w-full px-4 z-30 pointer-events-auto">
+            <div className={`p-5 rounded-2xl border backdrop-blur-xl text-center space-y-4 ${
+              touchdownSuccess
+                ? 'bg-emerald-950/95 border-emerald-500 text-emerald-200 shadow-[0_0_35px_rgba(16,185,129,0.35)]'
+                : 'bg-rose-950/95 border-rose-500 text-rose-200 shadow-[0_0_35px_rgba(244,63,94,0.35)]'
+            }`}>
+              <div className="font-mono font-black text-base">
+                {touchdownSuccess ? '🦅 CONTACT LIGHT! POUSO SUAVE CONFIRMADO!' : '💥 IMPACTO CRÍTICO! Velocidade excessiva.'}
+              </div>
+
+              {touchdownSuccess && (
+                <div className="flex flex-wrap items-center justify-center gap-2.5 pt-1">
+                  <button
+                    disabled={flagPlanted}
+                    onClick={handlePlantFlag}
+                    className={`px-3.5 py-2 rounded-xl text-xs font-mono font-bold flex items-center gap-2 cursor-pointer transition-all ${
+                      flagPlanted ? 'bg-slate-800 text-slate-400' : 'bg-cyan-500 text-slate-950 hover:bg-cyan-400 shadow-md shadow-cyan-500/25'
+                    }`}
+                  >
+                    <Flag className="w-4 h-4" />
+                    <span>{flagPlanted ? '✓ Bandeira Cravada' : 'Cravar Bandeira'}</span>
+                  </button>
+
+                  <button
+                    disabled={sampleCollected}
+                    onClick={handleCollectSample}
+                    className={`px-3.5 py-2 rounded-xl text-xs font-mono font-bold flex items-center gap-2 cursor-pointer transition-all ${
+                      sampleCollected ? 'bg-slate-800 text-slate-400' : 'bg-emerald-500 text-slate-950 hover:bg-emerald-400 shadow-md shadow-emerald-500/25'
+                    }`}
+                  >
+                    <FlaskConical className="w-4 h-4" />
+                    <span>{sampleCollected ? '✓ Amostra Guardada' : 'Recolher Amostra (+80 pts)'}</span>
+                  </button>
+
+                  {selectedMissionId === 'mars2020' && (
+                    <>
+                      <button
+                        onClick={handleDriveRover}
+                        className="px-3 py-2 rounded-xl bg-orange-500 hover:bg-orange-400 text-slate-950 text-xs font-mono font-bold flex items-center gap-1.5 cursor-pointer shadow-md"
+                      >
+                        <Compass className="w-4 h-4" />
+                        <span>Conduzir Rover</span>
+                      </button>
+
+                      <button
+                        onClick={handleFlyIngenuity}
+                        className="px-3 py-2 rounded-xl bg-purple-500 hover:bg-purple-400 text-white text-xs font-mono font-bold flex items-center gap-1.5 cursor-pointer shadow-md"
+                      >
+                        <Zap className="w-4 h-4" />
+                        <span>Descolar Ingenuity</span>
+                      </button>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* CONTROLOS TÁTEIS VIRTUAIS NO ECRÃ (IDEAL PARA JOGAR COM O RATO OU TOUCHSCREEN) */}
+        <div className="absolute bottom-20 left-4 z-20 pointer-events-auto flex items-center gap-2">
+          {/* Botão de Empuxo Principal */}
           <button
-            onClick={() => { playSound('click', soundEnabled); setIsDockCollapsed(!isDockCollapsed); }}
-            className="px-4 py-1.5 rounded-t-xl bg-slate-900 border-t border-x border-cyan-500/30 text-[11px] font-mono text-cyan-300 hover:text-white transition-all flex items-center gap-1.5 cursor-pointer shadow-md"
+            onMouseDown={handleTouchThrustStart}
+            onMouseUp={handleTouchThrustEnd}
+            onTouchStart={handleTouchThrustStart}
+            onTouchEnd={handleTouchThrustEnd}
+            className="w-16 h-16 rounded-2xl bg-cyan-500/30 hover:bg-cyan-500/50 active:bg-cyan-400 border-2 border-cyan-400 text-cyan-200 active:text-slate-950 flex flex-col items-center justify-center font-mono font-bold text-[10px] cursor-pointer shadow-lg backdrop-blur-md transition-all active:scale-95"
           >
-            {isDockCollapsed ? (
-              <>
-                <ChevronUp className="w-3.5 h-3.5" />
-                <span>{t('game_dock_expand')}</span>
-              </>
-            ) : (
-              <>
-                <ChevronDown className="w-3.5 h-3.5" />
-                <span>{t('game_dock_collapse')}</span>
-              </>
-            )}
+            <ArrowUp className="w-6 h-6" />
+            <span>EMPUXO</span>
           </button>
-        </div>
 
-        <div className="glass-panel p-4 rounded-2xl border border-cyan-500/30 bg-slate-900/95 shadow-2xl space-y-3">
-          <div className="flex flex-wrap items-center justify-between gap-3 text-xs font-mono">
-            {/* Controles de Propulsor e Manobras */}
-            <div className="flex flex-wrap items-center gap-2">
-              <button
-                onClick={triggerThrust}
-                disabled={propellantRemaining <= 0}
-                className="px-3.5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-bold text-xs transition-all flex items-center gap-2 cursor-pointer shadow-lg active:scale-95 disabled:opacity-40"
-              >
-                <Flame className="w-4 h-4 text-white" />
-                <span>{t('game_thrust_btn')}</span>
-              </button>
+          {/* D-Pad de Manobra RCS */}
+          <div className="grid grid-cols-2 gap-1.5 p-1.5 rounded-2xl bg-slate-950/80 border border-slate-800 backdrop-blur-md">
+            <button
+              onClick={() => {
+                rotationRef.current.y += 0.3;
+                playSound('rcs', soundEnabled);
+              }}
+              className="p-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-cyan-300 cursor-pointer"
+            >
+              <ArrowLeft className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => {
+                rotationRef.current.y -= 0.3;
+                playSound('rcs', soundEnabled);
+              }}
+              className="p-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-cyan-300 cursor-pointer"
+            >
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          </div>
 
-              <button
-                onClick={triggerRetro}
-                disabled={propellantRemaining <= 0}
-                className="px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs transition-all cursor-pointer active:scale-95 disabled:opacity-40"
-              >
-                {t('game_retro_btn')}
-              </button>
+          {/* Toggles de Piloto Automático SAS e Pouso Suave */}
+          <div className="flex flex-col gap-1.5">
+            <button
+              onClick={() => { setSasEnabled((prev) => !prev); playSound('toggle', soundEnabled); }}
+              className={`px-3 py-1.5 rounded-xl border text-[10px] font-mono font-bold transition-all cursor-pointer ${
+                sasEnabled
+                  ? 'bg-emerald-950 border-emerald-500/60 text-emerald-300 shadow-sm'
+                  : 'bg-slate-950/80 border-slate-800 text-slate-500'
+              }`}
+            >
+              SAS: {sasEnabled ? 'ON' : 'OFF'}
+            </button>
 
-              <button
-                onClick={triggerWarp}
-                disabled={propellantRemaining <= 100}
-                className="px-3.5 py-2.5 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-400 hover:to-purple-500 text-white font-bold text-xs transition-all flex items-center gap-1.5 cursor-pointer shadow-lg active:scale-95 disabled:opacity-40"
-              >
-                <Zap className="w-4 h-4 text-amber-300" />
-                <span>WARP BOOST [ESPAÇO]</span>
-              </button>
-
-              <button
-                onClick={triggerScienceScan}
-                className="px-3.5 py-2.5 rounded-xl bg-purple-700 hover:bg-purple-600 text-white font-bold text-xs transition-all flex items-center gap-1.5 cursor-pointer shadow-lg active:scale-95"
-              >
-                <Radio className="w-4 h-4" />
-                <span>{t('game_scan_btn')}</span>
-              </button>
-            </div>
-
-            {/* Teclas de Ajuda de Navegação */}
-            <div className="text-[11px] text-slate-400 font-mono hidden md:block">
-              {t('game_controls_thrust')}
-            </div>
+            <button
+              onClick={() => { setAutoHoverEnabled((prev) => !prev); playSound('toggle', soundEnabled); }}
+              className={`px-3 py-1.5 rounded-xl border text-[10px] font-mono font-bold transition-all cursor-pointer ${
+                autoHoverEnabled
+                  ? 'bg-cyan-950 border-cyan-500/60 text-cyan-300 shadow-sm'
+                  : 'bg-slate-950/80 border-slate-800 text-slate-500'
+              }`}
+            >
+              AUTO-POUSO: {autoHoverEnabled ? 'ATIVO' : 'OFF'}
+            </button>
           </div>
         </div>
+
+        {/* BARRA INFERIOR DE INSTRUMENTOS (VIDA, COMBUSTÍVEL, ALTITUDE, VELOCIDADE VERTICAL) */}
+        <div className="absolute bottom-4 left-4 right-4 flex flex-wrap items-center justify-between gap-3 pointer-events-auto z-20">
+          
+          <div className="flex items-center gap-3 p-3 rounded-2xl bg-slate-950/90 border border-slate-800 backdrop-blur-md font-mono text-xs shadow-xl">
+            {/* Casco */}
+            <div className="flex items-center gap-1.5">
+              <Shield className={`w-4 h-4 ${hullIntegrity > 50 ? 'text-emerald-400' : 'text-rose-400'}`} />
+              <span className="text-slate-400">Casco:</span>
+              <span className="font-bold text-white">{hullIntegrity}%</span>
+            </div>
+
+            <span className="text-slate-700">|</span>
+
+            {/* Combustível */}
+            <div className="flex items-center gap-1.5">
+              <Flame className="w-4 h-4 text-cyan-400" />
+              <span className="text-slate-400">Combustível:</span>
+              <span className="font-bold text-cyan-300">{Math.round(fuelPercentage)}%</span>
+            </div>
+
+            <span className="text-slate-700">|</span>
+
+            {/* Altitude Radar */}
+            <div className="flex items-center gap-1.5 text-slate-300">
+              <span className="text-slate-400">Altitude:</span>
+              <span className="font-bold text-white">{currentAltitude} m</span>
+            </div>
+
+            <span className="text-slate-700">|</span>
+
+            {/* Taxa de Descida (Velocidade Vertical e Horizontal) */}
+            <div className="flex items-center gap-1.5">
+              <span className="text-slate-400">V. Vert:</span>
+              <span className={`font-bold ${Math.abs(verticalVelocity) > 3.2 ? 'text-rose-400' : 'text-emerald-400'}`}>
+                {verticalVelocity} m/s
+              </span>
+              <span className="text-slate-500 text-[10px]">({horizontalSpeed} h)</span>
+            </div>
+
+            <span className="text-slate-700">|</span>
+
+            {/* Pontos de Ciência */}
+            <div className="flex items-center gap-1.5">
+              <Sparkles className="w-4 h-4 text-purple-400" />
+              <span className="text-slate-400">Ciência:</span>
+              <span className="font-bold text-purple-300">{sciencePoints} pts</span>
+            </div>
+
+            <span className="text-slate-700">|</span>
+
+            {/* Modo Ativo */}
+            <span className="px-2 py-0.5 rounded bg-cyan-950 text-cyan-300 border border-cyan-500/40 text-[10px] font-bold uppercase">
+              {playerControlMode === 'flight' ? 'Voo 🚀' : playerControlMode === 'rover' ? 'Rover 🚙' : 'Ingenuity 🚁'}
+            </span>
+          </div>
+
+          {/* Teclas de Voo Rápido */}
+          <div className="hidden lg:flex items-center gap-2 px-3.5 py-2.5 rounded-2xl bg-slate-950/90 border border-slate-800 text-[11px] font-mono text-slate-400 backdrop-blur-md">
+            <span className="text-cyan-400 font-bold">W / S</span> Empuxo •
+            <span className="text-cyan-400 font-bold">A / D</span> RCS •
+            <span className="text-cyan-400 font-bold">ESPAÇO</span> Turbo •
+            <span className="text-cyan-400 font-bold">R</span> Scanner •
+            <span className="text-cyan-400 font-bold">C</span> Câmara
+          </div>
+
+        </div>
+
       </div>
+
+      {/* PAINEL DE CIÊNCIA INTELIGENTE & OBJETIVOS DA MISSÃO */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        
+        {/* Lado Esquerdo: Conceito Científico Inteligente da NASA */}
+        <div className="lg:col-span-6 p-6 rounded-2xl bg-gradient-to-br from-slate-900/90 via-slate-900/70 to-cyan-950/30 border border-cyan-500/30 space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-cyan-300 text-xs font-mono font-bold">
+              <Sparkles className="w-4 h-4 text-cyan-400" />
+              <span>CIÊNCIA DA MISSÃO • POR QUE ESTA FÍSICA IMPORTA?</span>
+            </div>
+            <button
+              onClick={() => setIsTrajectoryModalOpen(true)}
+              className="text-[11px] font-mono text-cyan-400 hover:underline cursor-pointer"
+            >
+              Ver Trajetória Hohmann →
+            </button>
+          </div>
+
+          <h3 className="text-lg font-bold text-white font-mono">
+            {currentMission.scienceConceptTitle}
+          </h3>
+
+          <p className="text-xs sm:text-sm text-slate-300 leading-relaxed font-sans">
+            {currentMission.scienceConceptText}
+          </p>
+
+          <div className="pt-2 flex items-center gap-3 text-xs font-mono text-slate-400">
+            <span>Gravidade: <b className="text-white">{currentMission.gravity} m/s²</b></span>
+            <span>•</span>
+            <span>Atmosfera: <b className="text-white">{currentMission.hasAtmosphere ? `${currentMission.atmosphereDensity * 100}% CO2` : 'Vácuo Total'}</b></span>
+          </div>
+        </div>
+
+        {/* Lado Direito: Objetivos Interativos da Missão com Recompensas */}
+        <div className="lg:col-span-6 p-6 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-3">
+          <div className="flex items-center justify-between text-xs font-mono">
+            <span className="font-bold text-white uppercase tracking-wider flex items-center gap-2">
+              <Award className="w-4 h-4 text-cyan-400" />
+              <span>Objetivos Oficiais da Missão:</span>
+            </span>
+            <span className="text-cyan-400 font-bold">
+              {completedObjectiveIds.length} / {currentMission.objectives.length} Concluídos
+            </span>
+          </div>
+
+          <div className="space-y-2">
+            {currentMission.objectives.map((obj) => {
+              const isCompleted = completedObjectiveIds.includes(obj.id);
+              return (
+                <div
+                  key={obj.id}
+                  className={`p-3 rounded-xl border flex items-center justify-between gap-3 transition-all ${
+                    isCompleted
+                      ? 'bg-emerald-950/40 border-emerald-500/50 text-emerald-200'
+                      : 'bg-slate-950/70 border-slate-800 text-slate-300'
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5 text-xs font-mono">
+                    <CheckCircle2 className={`w-4 h-4 shrink-0 ${isCompleted ? 'text-emerald-400' : 'text-slate-600'}`} />
+                    <span className={isCompleted ? 'line-through text-slate-400' : 'text-slate-200'}>
+                      {obj.text}
+                    </span>
+                  </div>
+
+                  <span className={`text-[11px] font-mono px-2 py-0.5 rounded font-bold shrink-0 ${
+                    isCompleted ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40' : 'bg-slate-800 text-slate-400'
+                  }`}>
+                    +{obj.reward} pts
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+      </div>
+
+      {/* Modal de Trajetória Orbital e Transferência de Hohmann */}
+      <TrajectoryOrbitModal
+        isOpen={isTrajectoryModalOpen}
+        onClose={() => setIsTrajectoryModalOpen(false)}
+        targetBody={currentMission.targetBody}
+        onExecuteManeuver={() => {
+          markObjectiveComplete(currentMission.objectives[0]?.id || 'slingshot', 80, 'Queima de Injeção Executada com Sucesso!');
+        }}
+        soundEnabled={soundEnabled}
+      />
+
+      {/* Modal de Caderneta de Conquistas e Medalhas de Astronauta da NASA */}
+      <AstronautLogbookModal
+        isOpen={isLogbookModalOpen}
+        onClose={() => setIsLogbookModalOpen(false)}
+        completedObjectiveIds={completedObjectiveIds}
+        sciencePoints={sciencePoints}
+        onOpenCertificate={onOpenCertificate}
+      />
 
     </div>
   );

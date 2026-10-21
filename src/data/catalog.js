@@ -1,19 +1,21 @@
-// Constantes físicas e de engenharia (simplificadas, para o jogo)
-export const G0 = 9.80665; // gravidade padrão (m/s²), usada na equação do foguetão
-export const ISP = 320; // impulso específico do motor da sonda (s), bipropelente
+// ============================================================================
+// CONSTANTES FÍSICAS E CATÁLOGO DE COMPONENTES AEROESPACIAIS
+// ============================================================================
+
+export const G0 = 9.80665; // Gravidade padrão (m/s²), equação de Tsiolkovsky
+export const ISP = 320; // Impulso específico do motor da sonda (s)
 export const PANEL = { kgPerM2: 6, costPerM2M: 0.5, efficiency: 0.28, derate: 0.8 };
 export const BATTERY = { whPerKg: 150, usableFraction: 0.8, costPerKgM: 0.2 };
 export const RTG = { massKg: 45, powerW: 110, costM: 120 };
 export const COMMS = {
-  k: 2500, // calibrado: 100 W + antena de 3 m a 1,5 UA dá ~1 Mbps
+  k: 2500,
   amplifierEfficiency: 0.3,
-  txDuty: 0.25, // fração do tempo em que o transmissor está ligado
+  txDuty: 0.25,
   kgPerW: 0.05,
   costPerWM: 0.05,
 };
 export const INTEGRATION_COST_PER_KG_M = 0.03;
 
-// Tipos de missão (costM = milhões de dólares)
 export const missionTypes = {
   orbiter: {
     name: "Orbitador",
@@ -41,7 +43,6 @@ export const missionTypes = {
   },
 };
 
-// Instrumentos científicos
 export const instruments = {
   camera: {
     name: "Câmara Óptica Multi-espectral",
@@ -94,52 +95,47 @@ export const instruments = {
   },
 };
 
-// Lançadores: capacidade (kg) enviada para cada universo
+export const antennas = {
+  low: {
+    name: "Antena Omnidirecional (Baixo Ganho)",
+    diameterM: 0.3,
+    massKg: 2,
+    costM: 2,
+  },
+  medium: {
+    name: "Antena Parabólica Média (1.4m)",
+    diameterM: 1.4,
+    massKg: 15,
+    costM: 15,
+  },
+  high: {
+    name: "Antena Parabólica de Alto Ganho (2.4m)",
+    diameterM: 2.4,
+    massKg: 35,
+    costM: 35,
+  },
+};
+
 export const launchers = {
   small: {
-    name: "Lançador Ligeiro (ex: Electron / Vega)",
-    desc: "Custo reduzido e preparação rápida, ideal para cubesats e sondas ultra-leves.",
+    name: "Lançador Ligeiro (Electron / Vega)",
+    desc: "Custo reduzido e preparação rápida, ideal para cubesats e sondas leves.",
     costM: 25,
     reliability: 0.92,
     capacityKg: { mars: 400, moon: 750, europa: 140, titan: 95 },
   },
   medium: {
-    name: "Lançador Médio (ex: Falcon 9 / Ariane 62)",
+    name: "Lançador Médio (Falcon 9 / Ariane 62)",
     desc: "O cavalo de batalha comercial da exploração espacial, excelente custo-benefício.",
     costM: 90,
     reliability: 0.96,
     capacityKg: { mars: 1500, moon: 3200, europa: 750, titan: 520 },
   },
   heavy: {
-    name: "Super-Lançador Pesado (ex: SLS / Falcon Heavy)",
-    desc: "Capacidade máxima de injeção translunar e interplanetária para missões flagship com grande margem de carga.",
+    name: "Super-Lançador Pesado (SLS / Falcon Heavy)",
+    desc: "Capacidade máxima de injeção translunar e interplanetária para grandes missões.",
     costM: 150,
     reliability: 0.98,
     capacityKg: { mars: 4000, moon: 8500, europa: 2200, titan: 1500 },
-  },
-};
-
-// Antenas
-export const antennas = {
-  low: {
-    name: "Baixo Ganho (Omnidirecional)",
-    desc: "Leve e compacta, mas com taxa de transmissão de dados muito limitada a longas distâncias.",
-    diameterM: 0.3,
-    massKg: 3,
-    costM: 2,
-  },
-  medium: {
-    name: "Médio Ganho (Refletor 1.0 m)",
-    desc: "Equilíbrio padrão para orbitadores e rovers em Marte ou na Lua.",
-    diameterM: 1.0,
-    massKg: 10,
-    costM: 8,
-  },
-  high: {
-    name: "Alto Ganho Parabólica (Prato 2.5 m)",
-    desc: "Prato parabólico com mecanismo de apontamento fino. Essencial para streaming científico veloz.",
-    diameterM: 2.5,
-    massKg: 35,
-    costM: 25,
   },
 };

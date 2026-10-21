@@ -1,147 +1,154 @@
 // ============================================================================
-// COMPONENTE: HeroSection (Apresentação Principal do Portal)
-// Responsabilidade: Cabeçalho de impacto, imagem principal da sonda e telemetria de entrada
+// COMPONENTE: HeroSection (Secção Principal / Apresentação de Impacto)
+// Responsabilidade: Apresentar o simulador interativo, destacar o desafio NASA
+// e fornecer métricas e call-to-actions traduzidos para PT, EN e FR.
+// Comentários: Todos em Português conforme solicitado pela equipa.
 // ============================================================================
 
 import React from 'react';
-import { Rocket, Shield, Activity, Radio, ArrowRight, Compass, Play } from 'lucide-react';
-import heroImg from '../../assets/images/space_multiverso_hero_1792514006340.jpg';
+import { Rocket, Sparkles, Compass, ShieldCheck, ChevronRight, Activity, Radio, Cpu } from 'lucide-react';
 import { playSound } from '../../utils/audio';
 
-export default function HeroSection({ onOpenSimulator, soundEnabled, t = (k) => k }) {
-  // Parâmetros científicos de destaque em formato de badge com tradução dinâmica
+export default function HeroSection({ onOpenSimulator, soundEnabled = true, t = (k) => k }) {
+  // Badges com métricas e princípios físicos fundamentais traduzidos
   const telemetryBadges = [
     { label: t('hero_badge_tsiolkovsky'), val: "Δv = Isp · g0 · ln(m0/m1)", icon: Rocket },
-    { label: t('hero_badge_solar'), val: "S = 1361 / d² AU (W/m²)", icon: Activity },
-    { label: t('hero_badge_telemetry'), val: "Downlink DSN Terra", icon: Radio },
-    { label: t('hero_badge_systems'), val: "Massa · Potência · Custo", icon: Shield },
+    { label: t('hero_badge_solar'), val: "S = 1361 / d² AU (W/m²)", icon: Sparkles },
+    { label: t('hero_badge_telemetry'), val: "Pt · Gt · Gr · (λ / 4πR)²", icon: Radio },
+    { label: t('hero_badge_systems'), val: "SW Eng • NASA Space Apps", icon: Cpu },
   ];
 
+  const handleStartGame = () => {
+    playSound('launch', soundEnabled);
+    if (onOpenSimulator) onOpenSimulator();
+  };
+
   return (
-    <section className="relative overflow-hidden pt-6 pb-16 lg:py-24 border-b border-cyan-900/30">
-      {/* Luz ambiente de fundo estilo nebulosa espacial */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[500px] bg-gradient-to-tr from-cyan-600/10 via-blue-600/15 to-purple-600/10 blur-[130px] pointer-events-none rounded-full" />
-      
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+    <section className="relative overflow-hidden pt-12 pb-20 sm:pt-20 sm:pb-28">
+      {/* Luz ambiente de fundo e partículas simuladas */}
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[350px] bg-gradient-to-tr from-cyan-600/15 via-blue-500/10 to-purple-600/15 blur-[120px] pointer-events-none -z-10 rounded-full" />
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
           
-          {/* Coluna Esquerda: Texto de Apresentação e Botões */}
-          <div className="lg:col-span-7 space-y-6 text-left">
-            {/* Badges de Identificação da Competição e Equipa */}
-            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-950/80 border border-cyan-400/30 text-cyan-300 text-xs font-mono">
-                <span className="w-2 h-2 rounded-full bg-cyan-400" />
-                <span>{t('hero_badge')}</span>
-              </div>
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-900/90 border border-amber-500/30 text-amber-300 text-xs font-medium">
-                <span>{t('hero_team_badge')}</span>
-              </div>
+          {/* Lado Esquerdo: Mensagem de Impacto, Título e CTAs */}
+          <div className="lg:col-span-7 text-left space-y-6">
+            
+            {/* Tag de identificação da equipa e do desafio */}
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-cyan-950/70 border border-cyan-500/40 text-cyan-300 text-xs font-mono shadow-sm">
+              <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
+              <span>{t('hero_badge')}</span>
+              <span className="text-slate-500">•</span>
+              <span className="text-slate-300">{t('hero_team_badge')}</span>
             </div>
 
-            {/* Título Principal de Impacto */}
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-[1.12]">
+            {/* Título Principal */}
+            <h1 className="text-4xl sm:text-6xl font-black tracking-tight text-white leading-tight">
               {t('hero_title_1')}{' '}
-              <span className="bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 via-sky-300 to-blue-500">
+              <span className="bg-gradient-to-r from-cyan-400 via-sky-300 to-indigo-400 bg-clip-text text-transparent">
                 {t('hero_title_2')}
               </span>
             </h1>
 
-            {/* Descrição resumida da proposta do projeto */}
-            <p className="text-base sm:text-lg text-slate-300 leading-relaxed max-w-2xl">
+            {/* Descrição em conformidade com o desafio de engenharia espacial */}
+            <p className="text-base sm:text-lg text-slate-300 max-w-2xl leading-relaxed">
               {t('hero_desc')}
             </p>
 
-            {/* Botões de Ação para o Usuário */}
+            {/* Ações Rápidas: Jogar Agora em 3D ou Explorar o Desafio */}
             <div className="flex flex-wrap items-center gap-4 pt-2">
               <button
-                onClick={() => {
-                  playSound('click', soundEnabled);
-                  onOpenSimulator();
-                }}
-                className="px-6 py-3.5 rounded-xl text-base font-semibold text-white bg-gradient-to-r from-cyan-500 via-sky-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 shadow-[0_0_30px_rgba(56,189,248,0.4)] transition-all flex items-center gap-3 cursor-pointer border border-cyan-300/40 group hover:scale-[1.02]"
+                onClick={handleStartGame}
+                className="px-7 py-3.5 rounded-xl bg-gradient-to-r from-cyan-500 via-blue-600 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-white font-bold text-sm tracking-wide font-mono transition-all duration-200 shadow-[0_0_30px_rgba(56,189,248,0.4)] flex items-center gap-3 cursor-pointer group border border-cyan-300/40 hover:scale-[1.02]"
               >
-                <Play className="w-5 h-5 fill-white" />
+                <Rocket className="w-5 h-5 text-white group-hover:-translate-y-0.5 group-hover:translate-x-0.5 transition-transform" />
                 <span>{t('hero_cta_play')}</span>
-                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                <ChevronRight className="w-4 h-4 text-cyan-200 group-hover:translate-x-1 transition-transform" />
               </button>
 
               <a
-                href="#challenge"
+                href="#desafio"
                 onClick={() => playSound('click', soundEnabled)}
-                className="px-5 py-3.5 rounded-xl text-sm font-medium text-slate-300 hover:text-white bg-slate-900/80 hover:bg-slate-800 border border-slate-700/70 transition-all flex items-center gap-2 cursor-pointer"
+                className="px-6 py-3.5 rounded-xl bg-slate-900/80 hover:bg-slate-800 text-slate-200 hover:text-white font-medium text-sm font-mono border border-slate-700/80 transition-all flex items-center gap-2 cursor-pointer"
               >
                 <Compass className="w-4 h-4 text-cyan-400" />
                 <span>{t('hero_cta_explore')}</span>
               </a>
             </div>
 
-            {/* Fórmulas e Grandezas Chave em Cards Compactos */}
-            <div className="pt-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
-              {telemetryBadges.map((b, i) => {
-                const Icon = b.icon;
+            {/* Grid de 4 badges de física e telemetria */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-4">
+              {telemetryBadges.map((badge, idx) => {
+                const Icon = badge.icon;
                 return (
-                  <div key={i} className="p-3 rounded-lg bg-slate-900/60 border border-slate-800/80 backdrop-blur-sm">
-                    <div className="flex items-center gap-1.5 text-cyan-400 text-xs mb-1">
-                      <Icon className="w-3.5 h-3.5" />
-                      <span className="font-mono">{b.label}</span>
+                  <div
+                    key={idx}
+                    className="p-3 rounded-xl bg-slate-900/60 border border-slate-800/80 backdrop-blur-sm"
+                  >
+                    <div className="flex items-center gap-2 text-slate-400 text-[11px] font-mono">
+                      <Icon className="w-3.5 h-3.5 text-cyan-400" />
+                      <span className="truncate">{badge.label}</span>
                     </div>
-                    <div className="text-xs font-mono font-bold text-slate-200 truncate">
-                      {b.val}
+                    <div className="mt-1 font-mono text-xs font-bold text-slate-200 truncate">
+                      {badge.val}
                     </div>
                   </div>
                 );
               })}
             </div>
-
           </div>
 
-          {/* Coluna Direita: Imagem de Arte Aeroespacial e Telemetria Flutuante */}
+          {/* Lado Direito: Card Flutuante 3D de Telemetria da Nave */}
           <div className="lg:col-span-5 relative">
-            <div className="relative mx-auto rounded-2xl overflow-hidden border border-cyan-500/30 shadow-[0_0_40px_rgba(56,189,248,0.25)] group">
-              <img
-                src={heroImg}
-                alt="Sonda Espacial Multiverso em órbita de Marte"
-                className="w-full h-auto object-cover transform group-hover:scale-105 transition-transform duration-700"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent" />
+            <div className="relative mx-auto max-w-md rounded-2xl p-6 bg-gradient-to-b from-slate-900/90 to-slate-950/95 border border-cyan-500/30 shadow-2xl backdrop-blur-xl">
               
-              {/* Overlay de Telemetria da Sonda */}
-              <div className="absolute bottom-4 left-4 right-4 p-3.5 rounded-xl bg-slate-950/85 border border-cyan-500/30 backdrop-blur-md flex items-center justify-between">
-                <div>
-                  <div className="text-[11px] font-mono uppercase text-cyan-400 font-semibold tracking-wider">
-                    {t('hero_probe_status')}
-                  </div>
-                  <div className="text-xs text-slate-300">
-                    {t('hero_probe_sub')}
-                  </div>
+              {/* Cabeçalho do HUD Flutuante */}
+              <div className="flex items-center justify-between pb-4 border-b border-slate-800">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-3 h-3 rounded-full bg-emerald-400 animate-ping" />
+                  <span className="font-mono text-xs font-bold text-emerald-400">
+                    {t('hero_probe_nominal')}
+                  </span>
                 </div>
-                <span className="px-2 py-1 rounded bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-[10px] font-mono font-bold">
-                  {t('hero_probe_nominal')}
+                <span className="text-[11px] font-mono text-slate-400">
+                  {t('hero_isp')}
                 </span>
               </div>
-            </div>
 
-            {/* Badges Flutuantes Decorativos de Engenharia */}
-            <div className="hidden sm:flex absolute -top-5 -left-5 p-3 rounded-xl bg-slate-900/90 border border-cyan-500/40 shadow-xl backdrop-blur-md items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-cyan-500/20 flex items-center justify-center text-cyan-300">
-                <Rocket className="w-4 h-4" />
-              </div>
-              <div className="text-left">
-                <div className="text-[10px] font-mono text-slate-400">{t('hero_propulsion_eff')}</div>
-                <div className="text-xs font-mono font-bold text-cyan-300">{t('hero_isp')}</div>
-              </div>
-            </div>
+              {/* Corpo com Mockup Visual da Sonda Espacial */}
+              <div className="py-6 flex flex-col items-center justify-center text-center">
+                <div className="relative w-36 h-36 rounded-full bg-gradient-to-tr from-cyan-500/20 via-blue-500/20 to-purple-500/20 border border-cyan-400/40 flex items-center justify-center shadow-[0_0_40px_rgba(56,189,248,0.25)]">
+                  <Rocket className="w-16 h-16 text-cyan-300 animate-pulse" />
+                  <div className="absolute -top-1 -right-1 px-2 py-0.5 rounded bg-cyan-950 border border-cyan-400 text-[10px] font-mono text-cyan-300">
+                    3D
+                  </div>
+                </div>
 
-            <div className="hidden sm:flex absolute -bottom-5 -right-5 p-3 rounded-xl bg-slate-900/90 border border-purple-500/40 shadow-xl backdrop-blur-md items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-purple-500/20 flex items-center justify-center text-purple-300">
-                <Radio className="w-4 h-4" />
+                <div className="mt-5 space-y-1">
+                  <h3 className="font-bold text-lg text-white font-mono">
+                    {t('hero_probe_status')}
+                  </h3>
+                  <p className="text-xs text-slate-400 max-w-xs">
+                    {t('hero_probe_sub')}
+                  </p>
+                </div>
               </div>
-              <div className="text-left">
-                <div className="text-[10px] font-mono text-slate-400">{t('hero_dsn_link')}</div>
-                <div className="text-xs font-mono font-bold text-purple-300">{t('hero_comms_badge')}</div>
-              </div>
-            </div>
 
+              {/* Botão de Lançamento no HUD */}
+              <div className="pt-4 border-t border-slate-800 flex items-center justify-between">
+                <div className="flex items-center gap-2 text-xs font-mono text-slate-300">
+                  <Activity className="w-4 h-4 text-emerald-400" />
+                  <span>{t('hero_comms_badge')}</span>
+                </div>
+                <button
+                  onClick={handleStartGame}
+                  className="px-3.5 py-1.5 rounded-lg bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-400/50 text-cyan-300 text-xs font-mono font-bold transition-colors cursor-pointer"
+                >
+                  {t('hero_cta_play')} →
+                </button>
+              </div>
+
+            </div>
           </div>
 
         </div>

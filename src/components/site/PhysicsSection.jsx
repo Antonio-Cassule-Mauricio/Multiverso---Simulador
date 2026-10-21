@@ -1,63 +1,73 @@
 // ============================================================================
-// COMPONENTE: PhysicsSection (Modelagem Matemática & Fórmulas da NASA)
-// Responsabilidade: Exibir com rigor as equações com tradução dinâmica em PT/EN/FR
+// COMPONENTE: PhysicsSection (Modelagem Matemática e Fórmulas de Engenharia)
+// Responsabilidade: Apresentar as fórmulas físicas implementadas (Tsiolkovsky,
+// fluxo solar, enlace RF DSN e baterias) com cartões traduzidos dinamicamente.
+// Comentários: Todos em Português conforme solicitado pela equipa.
 // ============================================================================
 
 import React from 'react';
-import { Cpu, Orbit, Sun, Radio, BatteryCharging } from 'lucide-react';
+import { Rocket, Sun, Radio, BatteryCharging, Sparkles, BookOpen } from 'lucide-react';
 
 export default function PhysicsSection({ t = (k) => k }) {
-  // Lista com as 4 formulações físicas modeladas com chaves de tradução
-  const formulas = [
+  // Lista dos 4 módulos físicos rigorosos modelados no simulador
+  const physicsCards = [
     {
+      id: 'tsiolkovsky',
       title: t('formula_rocket_title'),
       subtitle: t('formula_rocket_sub'),
-      formula: "Δv = Isp · g0 · ln(m₀ / m₁)",
-      inverse: "m_propelente = m_seco · (e^(Δv / (Isp · g0)) - 1)",
+      formula: "Δv = Isp · g₀ · ln(m₀ / m₁)",
       explanation: t('formula_rocket_exp'),
-      icon: Orbit,
-      badge: "Isp = 320 s (Bipropelente)",
+      icon: Rocket,
+      border: "border-cyan-500/30",
+      accent: "text-cyan-400",
+      bg: "from-cyan-950/30 to-slate-900/60",
     },
     {
+      id: 'solar',
       title: t('formula_solar_title'),
       subtitle: t('formula_solar_sub'),
-      formula: "S(d) = 1361 / d²  [W/m²]",
-      inverse: "P_elétrica = S(d) · Área · 28% η · 0.8 derate · f_sol",
+      formula: "S = S₀ / d²  (W/m²)",
       explanation: t('formula_solar_exp'),
       icon: Sun,
-      badge: "Constante Solar = 1361 W/m²",
+      border: "border-amber-500/30",
+      accent: "text-amber-400",
+      bg: "from-amber-950/30 to-slate-900/60",
     },
     {
+      id: 'rf_link',
       title: t('formula_comms_title'),
       subtitle: t('formula_comms_sub'),
-      formula: "Taxa (bps) = (k · P_tx · D_antena²) / d²",
-      inverse: "Downlink (Mbit/dia) = (Taxa · Horas_contacto · 3600) / 10⁶",
+      formula: "Pr = Pt · Gt · Gr · (λ / 4πR)²",
       explanation: t('formula_comms_exp'),
       icon: Radio,
-      badge: "k = 2500 calibrado DSN",
+      border: "border-blue-500/30",
+      accent: "text-blue-400",
+      bg: "from-blue-950/30 to-slate-900/60",
     },
     {
+      id: 'battery',
       title: t('formula_batt_title'),
       subtitle: t('formula_batt_sub'),
-      formula: "Energia_necessária (Wh) = Consumo_W · Horas_noite",
-      inverse: "Bateria_útil = Massa_bateria · 150 Wh/kg · 80% DoD",
+      formula: "E_req = P_cons · t_eclipse",
       explanation: t('formula_batt_exp'),
       icon: BatteryCharging,
-      badge: "Densidade = 150 Wh/kg",
+      border: "border-emerald-500/30",
+      accent: "text-emerald-400",
+      bg: "from-emerald-950/30 to-slate-900/60",
     },
   ];
 
   return (
-    <section id="physics" className="py-20 border-b border-cyan-900/30 bg-slate-950/80 relative">
+    <section id="fisica" className="py-20 relative border-t border-slate-800/80 bg-slate-950/50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
-        {/* Cabeçalho da Secção */}
-        <div className="text-center max-w-3xl mx-auto space-y-4 mb-14">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-950/70 border border-cyan-500/30 text-cyan-300 text-xs font-mono uppercase tracking-wider">
-            <Cpu className="w-3.5 h-3.5" />
+        {/* Cabeçalho */}
+        <div className="text-center max-w-3xl mx-auto space-y-4 mb-16">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-950/80 border border-cyan-500/30 text-cyan-400 text-xs font-mono">
+            <BookOpen className="w-3.5 h-3.5" />
             <span>{t('physics_badge')}</span>
           </div>
-          <h2 className="text-3xl sm:text-4xl font-bold text-white tracking-tight">
+          <h2 className="text-3xl sm:text-5xl font-black text-white tracking-tight">
             {t('physics_title')}
           </h2>
           <p className="text-slate-300 text-base sm:text-lg leading-relaxed">
@@ -65,47 +75,40 @@ export default function PhysicsSection({ t = (k) => k }) {
           </p>
         </div>
 
-        {/* Grelha com os 4 Cartões de Fórmulas Dinamicamente Traduzidos */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {formulas.map((item, index) => {
-            const Icon = item.icon;
+        {/* Grelha de 4 Fórmulas de Física Espacial */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
+          {physicsCards.map((card) => {
+            const Icon = card.icon;
             return (
               <div
-                key={index}
-                className="glass-panel p-6 sm:p-7 rounded-2xl border border-slate-800 hover:border-cyan-500/40 transition-all bg-slate-900/70 text-left space-y-4 shadow-xl"
+                key={card.id}
+                className={`rounded-2xl p-6 sm:p-8 bg-gradient-to-br ${card.bg} border ${card.border} backdrop-blur-sm flex flex-col justify-between transition-all duration-300 hover:scale-[1.01]`}
               >
-                <div className="flex items-center justify-between">
+                <div className="space-y-4">
                   <div className="flex items-center gap-3">
-                    <div className="p-2.5 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-400">
-                      <Icon className="w-5 h-5" />
+                    <div className="w-10 h-10 rounded-xl bg-slate-900 border border-slate-700/60 flex items-center justify-center">
+                      <Icon className={`w-5 h-5 ${card.accent}`} />
                     </div>
                     <div>
-                      <h3 className="font-bold text-white text-base sm:text-lg">
-                        {item.title}
+                      <h3 className="font-bold text-white text-lg font-mono">
+                        {card.title}
                       </h3>
-                      <div className="text-xs text-slate-400 font-mono">
-                        {item.subtitle}
-                      </div>
+                      <p className="text-xs text-slate-400 font-mono">
+                        {card.subtitle}
+                      </p>
                     </div>
                   </div>
-                  <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-slate-800 border border-slate-700 text-slate-300">
-                    {item.badge}
-                  </span>
-                </div>
 
-                {/* Exibição da Equação */}
-                <div className="p-3.5 rounded-xl bg-slate-950 border border-cyan-500/20 font-mono space-y-1.5">
-                  <div className="text-cyan-300 text-xs sm:text-sm font-semibold tracking-wide">
-                    {item.formula}
+                  {/* Caixa com a Expressão Matemática em Notação de Código */}
+                  <div className="p-4 rounded-xl bg-slate-950/90 border border-slate-800 font-mono text-cyan-300 text-base sm:text-lg font-bold text-center tracking-wider shadow-inner">
+                    {card.formula}
                   </div>
-                  <div className="text-[11px] text-slate-400">
-                    {item.inverse}
-                  </div>
-                </div>
 
-                <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
-                  {item.explanation}
-                </p>
+                  {/* Explicação da Formulação */}
+                  <p className="text-slate-300 text-xs sm:text-sm leading-relaxed">
+                    {card.explanation}
+                  </p>
+                </div>
               </div>
             );
           })}

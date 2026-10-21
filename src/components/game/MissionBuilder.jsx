@@ -1,12 +1,17 @@
 // ============================================================================
 // COMPONENTE: MissionBuilder (Painel de Configuração de Engenharia da Sonda)
 // Responsabilidade: Controlos para seleção de destino, veículo, instrumentos, potência,
-// comms e lançador com tradução dinâmica total em PT/EN/FR para todos os cards
+// antenas e foguete lançador, com tradução dinâmica e comentários em Português.
 // ============================================================================
 
 import React from 'react';
 import { universes } from '../../data/universes';
 import { missionTypes, instruments, launchers, antennas } from '../../data/catalog';
+import { presetMissions } from '../../data/missionsPreset';
+import { 
+  Rocket, Satellite, ShieldAlert, Compass, Sun, Radio, Activity, 
+  Camera, Waves, Wind, Zap, Check, AlertCircle, Sparkles, Layers
+} from 'lucide-react';
 import { playSound } from '../../utils/audio';
 
 export default function MissionBuilder({
@@ -28,300 +33,354 @@ export default function MissionBuilder({
   setTxPower,
   launcherId,
   setLauncherId,
-  result,
-  soundEnabled,
+  soundEnabled = true,
   lang = 'pt',
   t = (k) => k,
 }) {
   const currentUniverse = universes[universeId] || universes.mars;
 
-  // Alternar a inclusão ou remoção de um instrumento científico
+  // Alternar seleção de instrumento científico
   const toggleInstrument = (instId) => {
     playSound('click', soundEnabled);
     if (chosenInstruments.includes(instId)) {
-      setChosenInstruments(chosenInstruments.filter((i) => i !== instId));
+      setChosenInstruments(chosenInstruments.filter((id) => id !== instId));
     } else {
       setChosenInstruments([...chosenInstruments, instId]);
     }
   };
 
+  // Carregar um preset de missão histórica
+  const applyPreset = (preset) => {
+    playSound('launch', soundEnabled);
+    setUniverseId(preset.universe);
+    setTypeId(preset.type);
+    setChosenInstruments(preset.instruments);
+    setPowerSource(preset.power.source);
+    setPanelArea(preset.power.panelArea);
+    setBatteryKg(preset.power.batteryKg);
+    setAntennaId(preset.comms.antenna);
+    setTxPower(preset.comms.txPower);
+    setLauncherId(preset.launcher);
+  };
+
+  // Ícones dinâmicos de instrumentos
+  const getInstIcon = (id) => {
+    switch (id) {
+      case 'camera': return Camera;
+      case 'spectrometer': return Radio;
+      case 'radar': return Waves;
+      case 'drillLab': return Activity;
+      case 'weather': return Wind;
+      case 'seismometer': return Zap;
+      case 'magnetometer': return Compass;
+      default: return Sparkles;
+    }
+  };
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 text-left">
       
-      {/* ETAPA 1: SELEÇÃO DE DESTINO CELESTE */}
-      <div className="glass-panel p-5 rounded-2xl border border-slate-800 bg-slate-900/70">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2 text-cyan-400 font-mono font-bold text-sm">
-            <span className="w-5 h-5 rounded-full bg-cyan-500/20 text-cyan-300 flex items-center justify-center text-xs">1</span>
+      {/* SELECÇÃO DE PRESETS HISTÓRICOS */}
+      <div className="glass-panel p-4 rounded-xl border border-cyan-500/30 bg-slate-900/60">
+        <div className="flex items-center gap-2 mb-3">
+          <Sparkles className="w-4 h-4 text-cyan-400" />
+          <span className="text-xs font-mono font-bold text-white uppercase tracking-wider">
+            {t('preset_title')}
+          </span>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {presetMissions.map((preset) => {
+            const tagKey = `preset_${preset.id}_tag`;
+            const descKey = `preset_${preset.id}_desc`;
+            return (
+              <button
+                key={preset.id}
+                onClick={() => applyPreset(preset)}
+                className="p-3 rounded-lg bg-slate-950/70 border border-slate-800 hover:border-cyan-500/50 text-left transition-all group cursor-pointer hover:bg-slate-900/80"
+              >
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-bold text-white font-mono group-hover:text-cyan-300">
+                    {preset.name}
+                  </span>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-cyan-950 text-cyan-300 font-mono border border-cyan-500/30">
+                    {t(tagKey)}
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-400 mt-1 line-clamp-2 leading-relaxed">
+                  {t(descKey)}
+                </p>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* PASSO 1: DESTINO CELESTE */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-bold text-white font-mono tracking-wider flex items-center gap-2">
+            <span className="w-5 h-5 rounded-full bg-cyan-500/20 text-cyan-400 flex items-center justify-center text-xs">1</span>
             <span>{t('builder_step_1')}</span>
-          </div>
-          <span className="text-xs font-mono text-emerald-400">
+          </h3>
+          <span className="text-xs font-mono text-cyan-400">
             {t('builder_step_1_sub')} ${currentUniverse.budgetM}M
           </span>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-          {Object.values(universes).map((u) => {
-            const active = universeId === u.id;
-            const planetName = t(`dest_${u.id}_name`) || u.name;
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {Object.entries(universes).map(([id, u]) => {
+            const isSelected = universeId === id;
+            const nameKey = `dest_${id}_name`;
             return (
               <button
-                key={u.id}
-                onClick={() => {
-                  playSound('click', soundEnabled);
-                  setUniverseId(u.id);
-                }}
-                className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
-                  active
-                    ? 'bg-cyan-950/40 border-cyan-400 shadow-[0_0_15px_rgba(56,189,248,0.25)]'
-                    : 'bg-slate-950/60 border-slate-800 hover:border-slate-700 text-slate-400'
+                key={id}
+                onClick={() => { playSound('click', soundEnabled); setUniverseId(id); }}
+                className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer ${
+                  isSelected
+                    ? 'bg-cyan-500/20 border-cyan-400 shadow-[0_0_15px_rgba(56,189,248,0.25)]'
+                    : 'bg-slate-900/60 border-slate-800 hover:border-slate-700'
                 }`}
               >
-                <div className="flex items-center justify-between mb-1">
-                  <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: u.color }} />
-                  <span className="text-[10px] font-mono text-slate-400">{u.sunDistanceAU} UA</span>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold font-mono text-white">
+                    {t(nameKey).split(' ')[0]}
+                  </span>
+                  {isSelected && <Check className="w-3.5 h-3.5 text-cyan-400" />}
                 </div>
-                <div className="font-bold text-white text-xs sm:text-sm truncate">
-                  {planetName.split(' ')[0]}
+                <div className="text-[11px] text-slate-400 font-mono mt-1">
+                  ${u.budgetM}M
                 </div>
-                <div className="text-[10px] text-slate-400 truncate">{u.surfaceGravity}</div>
               </button>
             );
           })}
         </div>
       </div>
 
-      {/* ETAPA 2: ARQUITETURA DA SONDA */}
-      <div className="glass-panel p-5 rounded-2xl border border-slate-800 bg-slate-900/70">
-        <div className="flex items-center gap-2 text-cyan-400 font-mono font-bold text-sm mb-3">
-          <span className="w-5 h-5 rounded-full bg-cyan-500/20 text-cyan-300 flex items-center justify-center text-xs">2</span>
+      {/* PASSO 2: ARQUITETURA DA SONDA */}
+      <div className="space-y-3">
+        <h3 className="text-sm font-bold text-white font-mono tracking-wider flex items-center gap-2">
+          <span className="w-5 h-5 rounded-full bg-cyan-500/20 text-cyan-400 flex items-center justify-center text-xs">2</span>
           <span>{t('builder_step_2')}</span>
-        </div>
+        </h3>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          {Object.entries(missionTypes).map(([id, tObj]) => {
-            const active = typeId === id;
-            const typeName = t(`type_${id}_name`) || tObj.name;
-            const typeDesc = t(`type_${id}_desc`) || tObj.description;
+          {Object.entries(missionTypes).map(([id, type]) => {
+            const isSelected = typeId === id;
+            const nameKey = `type_${id}_name`;
+            const descKey = `type_${id}_desc`;
+            const Icon = id === 'orbiter' ? Satellite : id === 'lander' ? ShieldAlert : Compass;
 
             return (
               <button
                 key={id}
-                onClick={() => {
-                  playSound('click', soundEnabled);
-                  setTypeId(id);
-                }}
-                className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
-                  active
-                    ? 'bg-cyan-950/40 border-cyan-400 shadow-[0_0_15px_rgba(56,189,248,0.25)]'
-                    : 'bg-slate-950/60 border-slate-800 hover:border-slate-700 text-slate-400'
+                onClick={() => { playSound('click', soundEnabled); setTypeId(id); }}
+                className={`p-4 rounded-xl border text-left transition-all cursor-pointer ${
+                  isSelected
+                    ? 'bg-cyan-500/20 border-cyan-400 shadow-[0_0_15px_rgba(56,189,248,0.25)]'
+                    : 'bg-slate-900/60 border-slate-800 hover:border-slate-700'
                 }`}
               >
-                <div className="font-bold text-white text-xs sm:text-sm">{typeName}</div>
-                <div className="text-[11px] font-mono text-cyan-400/90 mt-1">
-                  {t('builder_step_2_mass')}: {tObj.busMassKg}kg • ${tObj.busCostM}M
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <Icon className="w-4 h-4 text-cyan-400" />
+                    <span className="text-xs font-bold font-mono text-white">
+                      {t(nameKey)}
+                    </span>
+                  </div>
+                  {isSelected && <Check className="w-4 h-4 text-cyan-400" />}
                 </div>
-                <div className="text-[10px] text-slate-400 mt-1 line-clamp-2">{typeDesc}</div>
+                <p className="text-[11px] text-slate-400 leading-relaxed">
+                  {t(descKey)}
+                </p>
+                <div className="mt-2.5 pt-2 border-t border-slate-800/80 flex items-center justify-between text-[10px] font-mono text-slate-400">
+                  <span>{t('builder_step_2_mass')}: {type.busMassKg}kg</span>
+                  <span className="text-cyan-400">${type.busCostM}M</span>
+                </div>
               </button>
             );
           })}
         </div>
       </div>
 
-      {/* ETAPA 3: INSTRUMENTOS CIENTÍFICOS */}
-      <div className="glass-panel p-5 rounded-2xl border border-slate-800 bg-slate-900/70">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2 text-cyan-400 font-mono font-bold text-sm">
-            <span className="w-5 h-5 rounded-full bg-cyan-500/20 text-cyan-300 flex items-center justify-center text-xs">3</span>
+      {/* PASSO 3: CARGA CIENTÍFICA */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-bold text-white font-mono tracking-wider flex items-center gap-2">
+            <span className="w-5 h-5 rounded-full bg-cyan-500/20 text-cyan-400 flex items-center justify-center text-xs">3</span>
             <span>{t('builder_step_3')}</span>
-          </div>
-          <span className="text-xs font-mono text-purple-400">
+          </h3>
+          <span className="text-xs font-mono text-slate-400">
             {chosenInstruments.length} {t('builder_step_3_selected')}
           </span>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {Object.entries(instruments).map(([id, inst]) => {
             const isSelected = chosenInstruments.includes(id);
             const isCompatible = inst.worksOn.includes(typeId);
-            const instName = t(`inst_${id}_name`) || inst.name;
-            const instDesc = t(`inst_${id}_desc`) || inst.desc;
+            const nameKey = `inst_${id}_name`;
+            const descKey = `inst_${id}_desc`;
+            const Icon = getInstIcon(id);
 
             return (
-              <div
+              <button
                 key={id}
-                onClick={() => isCompatible && toggleInstrument(id)}
-                className={`p-3 rounded-xl border transition-all cursor-pointer flex items-start gap-3 ${
+                disabled={!isCompatible}
+                onClick={() => toggleInstrument(id)}
+                className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer ${
                   !isCompatible
-                    ? 'opacity-35 bg-slate-950/30 border-slate-800 cursor-not-allowed'
+                    ? 'opacity-40 bg-slate-950 border-slate-900 cursor-not-allowed'
                     : isSelected
-                    ? 'bg-purple-950/30 border-purple-400 shadow-[0_0_12px_rgba(192,132,252,0.2)]'
-                    : 'bg-slate-950/60 border-slate-800 hover:border-slate-700'
+                    ? 'bg-cyan-500/20 border-cyan-400 shadow-[0_0_15px_rgba(56,189,248,0.2)]'
+                    : 'bg-slate-900/60 border-slate-800 hover:border-slate-700'
                 }`}
               >
-                <input
-                  type="checkbox"
-                  checked={isSelected}
-                  disabled={!isCompatible}
-                  onChange={() => {}}
-                  className="mt-1 accent-purple-400 cursor-pointer"
-                />
-                <div className="flex-1 text-left">
-                  <div className="flex items-center justify-between">
-                    <span className="font-semibold text-white text-xs sm:text-sm">{instName}</span>
-                    <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-purple-900/60 text-purple-300 font-bold">
-                      +{inst.science} pts
+                <div className="flex items-center justify-between mb-1">
+                  <div className="flex items-center gap-2">
+                    <Icon className="w-4 h-4 text-cyan-400" />
+                    <span className="text-xs font-bold font-mono text-white truncate max-w-[200px]">
+                      {t(nameKey)}
                     </span>
                   </div>
-                  <p className="text-[10px] text-slate-400 line-clamp-1 mt-0.5">{instDesc}</p>
-                  <div className="text-[10px] font-mono text-slate-400 mt-1 flex gap-2">
-                    <span>{inst.massKg}kg</span>
-                    <span>•</span>
-                    <span>{inst.powerW}W</span>
-                    <span>•</span>
-                    <span className="text-emerald-400">${inst.costM}M</span>
-                  </div>
+                  {isSelected && <Check className="w-4 h-4 text-cyan-400 shrink-0" />}
                 </div>
-              </div>
+
+                <p className="text-[11px] text-slate-400 line-clamp-2 leading-relaxed">
+                  {t(descKey)}
+                </p>
+
+                <div className="mt-2 pt-2 border-t border-slate-800/80 flex items-center justify-between text-[10px] font-mono text-slate-400">
+                  <span>{inst.massKg}kg • {inst.powerW}W</span>
+                  <span className="text-cyan-400">${inst.costM}M (+{inst.science} pts)</span>
+                </div>
+              </button>
             );
           })}
         </div>
       </div>
 
-      {/* ETAPA 4: SISTEMA DE POTÊNCIA & BATERIAS */}
-      <div className="glass-panel p-5 rounded-2xl border border-slate-800 bg-slate-900/70">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2 text-cyan-400 font-mono font-bold text-sm">
-            <span className="w-5 h-5 rounded-full bg-cyan-500/20 text-cyan-300 flex items-center justify-center text-xs">4</span>
-            <span>{t('builder_step_4')}</span>
-          </div>
-          <span className="text-xs font-mono text-amber-400">
-            {powerSource === 'solar' ? t('builder_step_4_active_solar') : t('builder_step_4_active_rtg')}
-          </span>
-        </div>
+      {/* PASSO 4: FONTE DE POTÊNCIA & BATERIAS */}
+      <div className="space-y-4">
+        <h3 className="text-sm font-bold text-white font-mono tracking-wider flex items-center gap-2">
+          <span className="w-5 h-5 rounded-full bg-cyan-500/20 text-cyan-400 flex items-center justify-center text-xs">4</span>
+          <span>{t('builder_step_4')}</span>
+        </h3>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <button
-            onClick={() => {
-              playSound('toggle', soundEnabled);
-              setPowerSource('solar');
-            }}
-            className={`p-3 rounded-xl border text-left cursor-pointer transition-all ${
+            onClick={() => { playSound('click', soundEnabled); setPowerSource('solar'); }}
+            className={`p-4 rounded-xl border text-left transition-all cursor-pointer ${
               powerSource === 'solar'
-                ? 'bg-amber-950/30 border-amber-400 shadow-[0_0_15px_rgba(251,191,36,0.2)]'
-                : 'bg-slate-950/60 border-slate-800 text-slate-400'
+                ? 'bg-amber-500/20 border-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.25)]'
+                : 'bg-slate-900/60 border-slate-800 hover:border-slate-700'
             }`}
           >
-            <div className="font-bold text-white text-xs sm:text-sm">{t('builder_solar_title')}</div>
-            <div className="text-[10px] text-slate-400 mt-0.5">{t('builder_solar_desc')}</div>
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-xs font-bold font-mono text-white">
+                {t('builder_solar_title')}
+              </span>
+              {powerSource === 'solar' && <Check className="w-4 h-4 text-amber-400" />}
+            </div>
+            <p className="text-[11px] text-slate-400 leading-relaxed">
+              {t('builder_solar_desc')}
+            </p>
           </button>
 
           <button
-            onClick={() => {
-              playSound('toggle', soundEnabled);
-              setPowerSource('rtg');
-            }}
-            className={`p-3 rounded-xl border text-left cursor-pointer transition-all ${
+            onClick={() => { playSound('click', soundEnabled); setPowerSource('rtg'); }}
+            className={`p-4 rounded-xl border text-left transition-all cursor-pointer ${
               powerSource === 'rtg'
-                ? 'bg-amber-950/30 border-amber-400 shadow-[0_0_15px_rgba(251,191,36,0.2)]'
-                : 'bg-slate-950/60 border-slate-800 text-slate-400'
+                ? 'bg-purple-500/20 border-purple-400 shadow-[0_0_15px_rgba(168,85,247,0.25)]'
+                : 'bg-slate-900/60 border-slate-800 hover:border-slate-700'
             }`}
           >
-            <div className="font-bold text-white text-xs sm:text-sm">{t('builder_rtg_title')}</div>
-            <div className="text-[10px] text-slate-400 mt-0.5">{t('builder_rtg_desc')}</div>
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-xs font-bold font-mono text-white">
+                {t('builder_rtg_title')}
+              </span>
+              {powerSource === 'rtg' && <Check className="w-4 h-4 text-purple-400" />}
+            </div>
+            <p className="text-[11px] text-slate-400 leading-relaxed">
+              {t('builder_rtg_desc')}
+            </p>
           </button>
         </div>
 
-        {/* Sliders de Dimensionamento */}
-        <div className="space-y-4 pt-2">
-          {powerSource === 'solar' && (
-            <div className="space-y-1 text-left">
-              <div className="flex justify-between text-xs font-mono text-slate-300">
-                <span>{t('builder_panel_area')}</span>
-                <span className="text-amber-400 font-bold">{panelArea} m² ({panelArea * 6} kg)</span>
-              </div>
-              <input
-                type="range"
-                min="1"
-                max="15"
-                step="0.5"
-                value={panelArea}
-                onChange={(e) => setPanelArea(e.target.value)}
-                className="w-full accent-amber-400 cursor-pointer"
-              />
-              <div className="flex justify-between text-[10px] font-mono text-slate-500">
-                <span>1 m²</span>
-                <span>15 m²</span>
-              </div>
-            </div>
-          )}
-
-          <div className="space-y-1 text-left">
-            <div className="flex justify-between text-xs font-mono text-slate-300">
-              <span>{t('builder_battery_mass')}</span>
-              <span className="text-amber-400 font-bold">
-                {batteryKg} kg ({(batteryKg * 150 * 0.8).toFixed(0)} {t('builder_wh_useful')})
-              </span>
+        {powerSource === 'solar' && (
+          <div className="p-4 rounded-xl bg-slate-900/50 border border-slate-800 space-y-2">
+            <div className="flex items-center justify-between text-xs font-mono">
+              <span className="text-slate-300">{t('builder_panel_area')}</span>
+              <span className="text-cyan-400 font-bold">{panelArea} m²</span>
             </div>
             <input
               type="range"
               min="1"
-              max="35"
-              step="1"
-              value={batteryKg}
-              onChange={(e) => setBatteryKg(e.target.value)}
-              className="w-full accent-amber-400 cursor-pointer"
+              max="20"
+              step="0.5"
+              value={panelArea}
+              onChange={(e) => setPanelArea(parseFloat(e.target.value))}
+              className="w-full accent-cyan-400 cursor-pointer"
             />
-            <div className="flex justify-between text-[10px] font-mono text-slate-500">
-              <span>1 kg ({t('builder_emergency')})</span>
-              <span>35 kg ({t('builder_long_eclipse')})</span>
-            </div>
           </div>
+        )}
+
+        <div className="p-4 rounded-xl bg-slate-900/50 border border-slate-800 space-y-2">
+          <div className="flex items-center justify-between text-xs font-mono">
+            <span className="text-slate-300">{t('builder_battery_mass')}</span>
+            <span className="text-cyan-400 font-bold">{batteryKg} kg ({Math.round(batteryKg * 120)} {t('builder_wh_useful')})</span>
+          </div>
+          <input
+            type="range"
+            min="2"
+            max="30"
+            step="1"
+            value={batteryKg}
+            onChange={(e) => setBatteryKg(parseFloat(e.target.value))}
+            className="w-full accent-cyan-400 cursor-pointer"
+          />
         </div>
       </div>
 
-      {/* ETAPA 5: TELECOMUNICAÇÕES & POTÊNCIA DO TRANSMISSOR */}
-      <div className="glass-panel p-5 rounded-2xl border border-slate-800 bg-slate-900/70">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2 text-cyan-400 font-mono font-bold text-sm">
-            <span className="w-5 h-5 rounded-full bg-cyan-500/20 text-cyan-300 flex items-center justify-center text-xs">5</span>
-            <span>{t('builder_step_5')}</span>
-          </div>
-        </div>
+      {/* PASSO 5: TELECOMUNICAÇÕES */}
+      <div className="space-y-4">
+        <h3 className="text-sm font-bold text-white font-mono tracking-wider flex items-center gap-2">
+          <span className="w-5 h-5 rounded-full bg-cyan-500/20 text-cyan-400 flex items-center justify-center text-xs">5</span>
+          <span>{t('builder_step_5')}</span>
+        </h3>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 mb-4">
-          {Object.entries(antennas).map(([id, a]) => {
-            const active = antennaId === id;
-            const antennaName = t(`antenna_${id}_name`) || a.name;
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {Object.entries(antennas).map(([id, ant]) => {
+            const isSelected = antennaId === id;
+            const nameKey = `antenna_${id}_name`;
 
             return (
               <button
                 key={id}
-                onClick={() => {
-                  playSound('click', soundEnabled);
-                  setAntennaId(id);
-                }}
-                className={`p-3 rounded-xl border text-left cursor-pointer transition-all ${
-                  active
-                    ? 'bg-cyan-950/40 border-cyan-400 shadow-[0_0_15px_rgba(56,189,248,0.25)]'
-                    : 'bg-slate-950/60 border-slate-800 text-slate-400'
+                onClick={() => { playSound('click', soundEnabled); setAntennaId(id); }}
+                className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer ${
+                  isSelected
+                    ? 'bg-cyan-500/20 border-cyan-400 shadow-[0_0_15px_rgba(56,189,248,0.25)]'
+                    : 'bg-slate-900/60 border-slate-800 hover:border-slate-700'
                 }`}
               >
-                <div className="font-bold text-white text-xs sm:text-sm">{antennaName}</div>
-                <div className="text-[10px] font-mono text-cyan-300 mt-1">
-                  Ø {a.diameterM}m • {a.massKg}kg • ${a.costM}M
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs font-bold font-mono text-white truncate">
+                    {t(nameKey)}
+                  </span>
+                  {isSelected && <Check className="w-3.5 h-3.5 text-cyan-400 shrink-0" />}
+                </div>
+                <div className="text-[11px] text-slate-400 font-mono">
+                  {ant.massKg}kg • ${ant.costM}M
                 </div>
               </button>
             );
           })}
         </div>
 
-        <div className="space-y-1 text-left">
-          <div className="flex justify-between text-xs font-mono text-slate-300">
-            <span>{t('builder_tx_power')}</span>
-            <span className="text-cyan-400 font-bold">
-              {txPower} W ({result ? (result.comms.rateBps / 1000).toFixed(1) : 0} kbps)
-            </span>
+        <div className="p-4 rounded-xl bg-slate-900/50 border border-slate-800 space-y-2">
+          <div className="flex items-center justify-between text-xs font-mono">
+            <span className="text-slate-300">{t('builder_tx_power')}</span>
+            <span className="text-cyan-400 font-bold">{txPower} W</span>
           </div>
           <input
             type="range"
@@ -329,53 +388,49 @@ export default function MissionBuilder({
             max="120"
             step="5"
             value={txPower}
-            onChange={(e) => setTxPower(e.target.value)}
+            onChange={(e) => setTxPower(parseInt(e.target.value, 10))}
             className="w-full accent-cyan-400 cursor-pointer"
           />
-          <div className="flex justify-between text-[10px] font-mono text-slate-500">
-            <span>5 W</span>
-            <span>120 W</span>
-          </div>
         </div>
       </div>
 
-      {/* ETAPA 6: FOGUETÃO LANÇADOR */}
-      <div className="glass-panel p-5 rounded-2xl border border-slate-800 bg-slate-900/70">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2 text-cyan-400 font-mono font-bold text-sm">
-            <span className="w-5 h-5 rounded-full bg-cyan-500/20 text-cyan-300 flex items-center justify-center text-xs">6</span>
-            <span>{t('builder_step_6')}</span>
-          </div>
-        </div>
+      {/* PASSO 6: FOGUETÃO LANÇADOR */}
+      <div className="space-y-3">
+        <h3 className="text-sm font-bold text-white font-mono tracking-wider flex items-center gap-2">
+          <span className="w-5 h-5 rounded-full bg-cyan-500/20 text-cyan-400 flex items-center justify-center text-xs">6</span>
+          <span>{t('builder_step_6')}</span>
+        </h3>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          {Object.entries(launchers).map(([id, l]) => {
-            const active = launcherId === id;
-            const capacity = l.capacityKg[universeId] || 0;
-            const launcherName = t(`launcher_${id}_name`) || l.name;
-            const launcherDesc = t(`launcher_${id}_desc`) || l.desc;
+          {Object.entries(launchers).map(([id, rocket]) => {
+            const isSelected = launcherId === id;
+            const nameKey = `launcher_${id}_name`;
+            const descKey = `launcher_${id}_desc`;
+            const cap = rocket.capacityKg[universeId] || 1000;
 
             return (
               <button
                 key={id}
-                onClick={() => {
-                  playSound('click', soundEnabled);
-                  setLauncherId(id);
-                }}
-                className={`p-3 rounded-xl border text-left cursor-pointer transition-all ${
-                  active
-                    ? 'bg-blue-950/40 border-blue-400 shadow-[0_0_15px_rgba(59,130,246,0.25)]'
-                    : 'bg-slate-950/60 border-slate-800 text-slate-400'
+                onClick={() => { playSound('click', soundEnabled); setLauncherId(id); }}
+                className={`p-4 rounded-xl border text-left transition-all cursor-pointer ${
+                  isSelected
+                    ? 'bg-cyan-500/20 border-cyan-400 shadow-[0_0_15px_rgba(56,189,248,0.25)]'
+                    : 'bg-slate-900/60 border-slate-800 hover:border-slate-700'
                 }`}
               >
-                <div className="font-bold text-white text-xs sm:text-sm">{launcherName}</div>
-                <div className="text-[11px] font-mono text-cyan-300 mt-1 font-semibold">
-                  {t('builder_launcher_cap')} {capacity} kg • ${l.costM}M
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-bold font-mono text-white truncate">
+                    {t(nameKey)}
+                  </span>
+                  {isSelected && <Check className="w-4 h-4 text-cyan-400 shrink-0" />}
                 </div>
-                <div className="text-[10px] font-mono text-slate-400 mt-0.5">
-                  {t('builder_launcher_reliability')} {(l.reliability * 100).toFixed(0)}%
+                <p className="text-[11px] text-slate-400 leading-relaxed">
+                  {t(descKey)}
+                </p>
+                <div className="mt-2.5 pt-2 border-t border-slate-800/80 flex items-center justify-between text-[10px] font-mono text-slate-400">
+                  <span>{t('builder_launcher_cap')} <b className="text-white">{cap}kg</b></span>
+                  <span className="text-cyan-400 font-bold">${rocket.costM}M</span>
                 </div>
-                <p className="text-[10px] text-slate-500 line-clamp-2 mt-1">{launcherDesc}</p>
               </button>
             );
           })}

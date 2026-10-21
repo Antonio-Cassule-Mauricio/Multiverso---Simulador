@@ -1,62 +1,69 @@
 // ============================================================================
-// COMPONENTE: TeamSection (Apresentação dos Estudantes e Colegas de Engenharia)
-// Responsabilidade: Destaque da equipa de 5 colegas estudantes de engenharia de software de Angola com tradução 100% dinâmica
+// COMPONENTE: TeamSection (Apresentação da Equipa Multiverso)
+// Responsabilidade: Apresentar os 5 colegas estudantes de Engenharia de Software
+// (António Maurício, Adilson Francisco, Agostinho Mariti, Edmilson Segredo, Hilton Diamantino)
+// sem nenhuma referência a instituições externas, com tradução dinâmica e comentários em PT.
 // ============================================================================
 
 import React from 'react';
-import { Award, ShieldCheck } from 'lucide-react';
-import missionRoomImg from '../../assets/images/mission_operations_room_1792514036256.jpg';
+import { Users, Award, Code2, Globe2, Sparkles, Terminal, CheckCircle2 } from 'lucide-react';
 
 export default function TeamSection({ t = (k) => k }) {
-  // Dados dos 5 colegas participantes no NASA Space Apps Challenge 2026 com traduções
-  const members = [
+  // Lista dos 5 membros da equipa de estudantes de Engenharia de Software
+  const teamMembers = [
     {
       name: "António Maurício",
       role: t('member_1_role'),
       focus: t('member_1_focus'),
-      tag: "Team Lead",
-      badgeColor: "border-cyan-400/40 text-cyan-300 bg-cyan-950/60",
+      initials: "AM",
+      isLead: true,
+      tag: "Tech Lead",
     },
     {
       name: "Adilson Francisco",
       role: t('member_2_role'),
       focus: t('member_2_focus'),
-      tag: "Dynamics",
-      badgeColor: "border-blue-400/40 text-blue-300 bg-blue-950/60",
+      initials: "AF",
+      isLead: false,
+      tag: "Orbital Dynamics",
     },
     {
       name: "Agostinho Mariti",
       role: t('member_3_role'),
       focus: t('member_3_focus'),
-      tag: "Payload",
-      badgeColor: "border-purple-400/40 text-purple-300 bg-purple-950/60",
+      initials: "AM",
+      isLead: false,
+      tag: "Payload Systems",
     },
     {
       name: "Edmilson Segredo",
       role: t('member_4_role'),
       focus: t('member_4_focus'),
-      tag: "Power & Comms",
-      badgeColor: "border-amber-400/40 text-amber-300 bg-amber-950/60",
+      initials: "ES",
+      isLead: false,
+      tag: "Power & RF Comms",
     },
     {
       name: "Hilton Diamantino",
       role: t('member_5_role'),
       focus: t('member_5_focus'),
-      tag: "UI / 3D Graphics",
-      badgeColor: "border-emerald-400/40 text-emerald-300 bg-emerald-950/60",
+      initials: "HD",
+      isLead: false,
+      tag: "3D Graphics & UI",
     },
   ];
 
   return (
-    <section id="team" className="py-20 border-b border-cyan-900/30 relative">
+    <section id="equipa" className="py-20 relative border-t border-slate-800/80 bg-slate-950/60">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
-        {/* Cabeçalho da Secção da Equipa */}
-        <div className="text-center max-w-3xl mx-auto space-y-4 mb-14">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-950/60 border border-amber-500/40 text-amber-300 text-xs font-mono uppercase tracking-wider">
+        {/* Cabeçalho */}
+        <div className="text-center max-w-3xl mx-auto space-y-4 mb-16">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-950/80 border border-cyan-500/30 text-cyan-400 text-xs font-mono">
+            <Users className="w-3.5 h-3.5" />
             <span>{t('team_badge')}</span>
           </div>
-          <h2 className="text-3xl sm:text-4xl font-bold text-white tracking-tight">
+          <h2 className="text-3xl sm:text-5xl font-black text-white tracking-tight">
             {t('team_title')}
           </h2>
           <p className="text-slate-300 text-base sm:text-lg leading-relaxed">
@@ -64,92 +71,77 @@ export default function TeamSection({ t = (k) => k }) {
           </p>
         </div>
 
-        {/* Banner com Imagem do Centro de Operações de Missão */}
-        <div className="mb-14 rounded-2xl overflow-hidden border border-cyan-500/30 shadow-2xl relative group">
-          <img
-            src={missionRoomImg}
-            alt="Sala de Operações da Missão NASA Space Apps"
-            className="w-full h-64 sm:h-80 object-cover object-center group-hover:scale-102 transition-transform duration-700"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/50 to-transparent flex items-end p-6 sm:p-8">
-            <div className="text-left max-w-2xl">
-              <div className="flex items-center gap-2 mb-1">
-                <span className="px-2.5 py-0.5 rounded bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 font-mono text-xs font-semibold">
-                  {t('team_banner_badge')}
-                </span>
-                <span className="px-2.5 py-0.5 rounded bg-amber-500/20 border border-amber-400/40 text-amber-300 font-mono text-xs">
-                  ANGOLA 🇦🇴
-                </span>
-              </div>
-              <h3 className="text-xl sm:text-2xl font-bold text-white">
-                {t('team_banner_title')}
-              </h3>
-              <p className="text-xs sm:text-sm text-slate-300 mt-1">
-                {t('team_banner_sub')}
-              </p>
+        {/* Banner de Compromisso e Excelência da Equipa */}
+        <div className="mb-12 p-6 sm:p-8 rounded-2xl bg-gradient-to-r from-slate-900/90 via-cyan-950/40 to-slate-900/90 border border-cyan-500/30 shadow-xl flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="space-y-2 text-left">
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded bg-cyan-500/20 text-cyan-300 font-mono text-[11px] font-bold">
+              <Sparkles className="w-3 h-3 text-cyan-400" />
+              <span>{t('team_banner_badge')}</span>
+            </div>
+            <h3 className="text-xl sm:text-2xl font-bold text-white font-mono">
+              {t('team_banner_title')}
+            </h3>
+            <p className="text-xs sm:text-sm text-slate-300 max-w-2xl leading-relaxed">
+              {t('team_banner_sub')}
+            </p>
+          </div>
+
+          <div className="flex items-center gap-3 shrink-0">
+            <div className="px-4 py-3 rounded-xl bg-slate-950/80 border border-slate-800 text-center">
+              <div className="text-2xl font-black text-cyan-400 font-mono">5</div>
+              <div className="text-[10px] text-slate-400 font-mono uppercase tracking-wider">{t('team_software_eng')}</div>
+            </div>
+            <div className="px-4 py-3 rounded-xl bg-slate-950/80 border border-slate-800 text-center">
+              <div className="text-2xl font-black text-emerald-400 font-mono">100%</div>
+              <div className="text-[10px] text-slate-400 font-mono uppercase tracking-wider">NASA Apps 2026</div>
             </div>
           </div>
         </div>
 
-        {/* Grelha com os 5 Colegas da Equipa Dinamicamente Traduzidos */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {members.map((m, idx) => {
-            return (
-              <div
-                key={idx}
-                className="glass-panel p-6 rounded-2xl border border-slate-800 hover:border-cyan-400/50 transition-all text-left flex flex-col justify-between bg-slate-900/60 shadow-lg group hover:-translate-y-1"
-              >
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className={`text-[10px] font-mono px-2 py-0.5 rounded border uppercase tracking-wider font-semibold ${m.badgeColor}`}>
-                      {m.tag}
-                    </span>
-                    <span className="text-xs font-mono text-slate-400">Angola</span>
+        {/* Grelha com os 5 Membros da Equipa */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {teamMembers.map((member, idx) => (
+            <div
+              key={idx}
+              className={`rounded-2xl p-6 bg-slate-900/70 border ${
+                member.isLead ? 'border-cyan-500/50 shadow-[0_0_25px_rgba(56,189,248,0.15)] bg-slate-900/90' : 'border-slate-800/80 hover:border-slate-700'
+              } flex flex-col justify-between transition-all duration-300 hover:scale-[1.01]`}
+            >
+              <div>
+                <div className="flex items-start justify-between gap-3 mb-4">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-tr from-cyan-600/30 via-blue-600/20 to-purple-600/30 border border-cyan-500/40 flex items-center justify-center font-mono font-bold text-base text-cyan-300 shadow-sm">
+                    {member.initials}
                   </div>
-
-                  <div>
-                    <h3 className="text-lg font-bold text-white group-hover:text-cyan-300 transition-colors">
-                      {m.name}
-                    </h3>
-                    <p className="text-xs font-medium text-cyan-400 mt-0.5">
-                      {m.role}
-                    </p>
-                  </div>
-
-                  <p className="text-xs text-slate-400 leading-relaxed pt-1">
-                    {m.focus}
-                  </p>
+                  <span className={`px-2.5 py-1 rounded text-[11px] font-mono font-bold border ${
+                    member.isLead ? 'bg-cyan-500/20 text-cyan-300 border-cyan-400/40' : 'bg-slate-800 text-slate-300 border-slate-700'
+                  }`}>
+                    {member.tag}
+                  </span>
                 </div>
 
-                <div className="mt-4 pt-3 border-t border-slate-800 flex items-center justify-between text-[11px] text-slate-400 font-mono">
+                <h4 className="text-lg font-bold text-white font-mono flex items-center gap-2">
+                  <span>{member.name}</span>
+                  {member.isLead && <Award className="w-4 h-4 text-cyan-400" />}
+                </h4>
+
+                <p className="text-xs font-semibold text-cyan-400 font-mono mt-1">
+                  {member.role}
+                </p>
+
+                <p className="text-xs text-slate-400 mt-2.5 leading-relaxed">
+                  {member.focus}
+                </p>
+              </div>
+
+              <div className="mt-5 pt-3 border-t border-slate-800/80 flex items-center justify-between text-[11px] font-mono text-slate-400">
+                <span className="flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
                   <span>{t('team_software_eng')}</span>
-                  <span className="text-cyan-400 font-bold">Space Apps 2026</span>
-                </div>
+                </span>
+                <span className="text-slate-500">Angola 🇦🇴</span>
               </div>
-            );
-          })}
-
-          {/* Cartão de Compromisso de Vitória no Concurso */}
-          <div className="glass-panel p-6 rounded-2xl border border-amber-500/30 bg-gradient-to-br from-slate-900/90 to-amber-950/20 text-left flex flex-col justify-between shadow-lg">
-            <div className="space-y-3">
-              <div className="flex items-center gap-2 text-amber-400">
-                <Award className="w-5 h-5" />
-                <span className="text-xs font-mono uppercase font-bold tracking-wider">{t('team_commitment_title')}</span>
-              </div>
-              <h3 className="text-lg font-bold text-white">
-                {t('team_commitment_heading')}
-              </h3>
-              <p className="text-xs text-slate-300 leading-relaxed">
-                {t('team_commitment_desc')}
-              </p>
             </div>
-            
-            <div className="mt-4 pt-3 border-t border-amber-500/20 flex items-center gap-2 text-xs font-mono text-amber-300">
-              <ShieldCheck className="w-4 h-4 text-emerald-400" />
-              <span>{t('team_open_source')}</span>
-            </div>
-          </div>
-
+          ))}
         </div>
 
       </div>

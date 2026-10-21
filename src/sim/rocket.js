@@ -1,11 +1,11 @@
-import { G0 } from "../data/catalog";
+// ============================================================================
+// SIMULAÇÃO DE PROPULSÃO E EQUAÇÃO DE TSIOLKOVSKY
+// ============================================================================
+import { G0, ISP } from '../data/catalog';
 
-// Equação de Tsiolkovsky: quanto Δv (m/s) o motor consegue dar
-export function deltaV(isp, m0, m1) {
-  return isp * G0 * Math.log(m0 / m1);
-}
-
-// Inversa: quanto propelente (kg) é preciso para um dado Δv
-export function propellantNeeded(massAfterBurn, dv, isp) {
-  return massAfterBurn * (Math.exp(dv / (isp * G0)) - 1);
+export function computePropellantMass(dryMassKg, deltaVKmS = 2.1) {
+  const deltaVMs = deltaVKmS * 1000;
+  // m_prop = m_seco * (exp(deltaV / (Isp * g0)) - 1)
+  const massRatio = Math.exp(deltaVMs / (ISP * G0));
+  return dryMassKg * (massRatio - 1);
 }

@@ -1,13 +1,17 @@
-import { PANEL } from "../data/catalog";
+// ============================================================================
+// SIMULAÇÃO DE POTÊNCIA ELÉTRICA & LEI DO INVERSO DO QUADRADO
+// ============================================================================
+import { PANEL, BATTERY, RTG } from '../data/catalog';
 
-// A luz do Sol diminui com o quadrado da distância (lei do inverso do quadrado)
-export function solarFlux(distanceAU) {
-  return 1361 / distanceAU ** 2; // W/m² (1361 é o valor à distância da Terra)
+export function computePowerGeneration(source, panelAreaM2, sunDistanceAU) {
+  if (source === 'rtg') {
+    return RTG.powerW;
+  }
+  // S = 1361 / d^2 W/m^2
+  const solarFlux = 1361 / (sunDistanceAU * sunDistanceAU);
+  return solarFlux * panelAreaM2 * PANEL.efficiency * PANEL.derate;
 }
 
-// Potência média dos painéis ao longo de um ciclo dia/noite
-export function solarPowerW({ distanceAU, areaM2, incidence, sunFraction }) {
-  return (
-    solarFlux(distanceAU) * areaM2 * PANEL.efficiency * PANEL.derate * incidence * sunFraction
-  );
+export function computeBatteryCapacityWh(batteryKg) {
+  return batteryKg * BATTERY.whPerKg * BATTERY.usableFraction;
 }

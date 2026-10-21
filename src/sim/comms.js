@@ -1,12 +1,15 @@
-import { COMMS } from "../data/catalog";
+// ============================================================================
+// SIMULAÇÃO DE TELECOMUNICAÇÕES & EQUAÇÃO DE ENLACE DE RF (DSN)
+// ============================================================================
+import { COMMS } from '../data/catalog';
 
-// Taxa de dados (bits/s). O ganho da antena cresce com o diâmetro²,
-// e o sinal enfraquece com a distância²
-export function dataRateBps(txPowerW, antennaDiameterM, distanceAU) {
-  return (COMMS.k * txPowerW * antennaDiameterM ** 2) / distanceAU ** 2;
+export function computeDataRateBps(antennaDiameterM, txPowerW, earthDistanceAU) {
+  // Rate = (k * P_tx * D^2) / d^2
+  const numerator = COMMS.k * txPowerW * (antennaDiameterM * antennaDiameterM);
+  const denominator = earthDistanceAU * earthDistanceAU;
+  return numerator / Math.max(0.01, denominator);
 }
 
-// Consumo elétrico médio do transmissor
-export function commsElectricW(txPowerW) {
-  return (txPowerW / COMMS.amplifierEfficiency) * COMMS.txDuty;
+export function computeDailyDownlinkMbit(rateBps, contactHoursPerDay = 8) {
+  return (rateBps * contactHoursPerDay * 3600) / 1e6;
 }
